@@ -1,13 +1,13 @@
 import os
 
 import openai
-from openai.error import RateLimitError
+from openai import RateLimitError
 
 # Set our OpenAI API Key from environment variable
-openai.api_key = os.environ.get('OPENAI_API_KEY')
+client = openai.OpenAI(api_key=os.environ.get('OPENAI_API_KEY'))
 
 # Check if API key is available
-API_KEY_AVAILABLE = bool(openai.api_key)
+API_KEY_AVAILABLE = bool(os.environ.get('OPENAI_API_KEY'))
 
 def demo_analyze_response(essay_text):
     """Demo response for essay analysis when no API key is available"""
@@ -95,7 +95,7 @@ My grandmother's kitchen taught me that the best creations come from combining t
 def generate_response(messages, model_type, max_tokens):
     def stream():
         try:
-            response = openai.ChatCompletion.create(
+            response = client.chat.completions.create(
                 model=model_type, messages=messages, max_tokens=max_tokens, stream=True
             )
 
