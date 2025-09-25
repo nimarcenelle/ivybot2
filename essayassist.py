@@ -1,7 +1,7 @@
 import os
 
 import openai
-from openai import RateLimitError
+from openai import APIError
 
 # Set our OpenAI API Key from environment variable
 client = openai.OpenAI(api_key=os.environ.get('OPENAI_API_KEY'))
@@ -95,7 +95,9 @@ My grandmother's kitchen taught me that the best creations come from combining t
 def generate_response(messages, model_type, max_tokens):
     def stream():
         try:
-            response = client.chat.completions.create(
+            # Create client instance for this function
+            openai_client = openai.OpenAI(api_key=os.environ.get('OPENAI_API_KEY'))
+            response = openai_client.chat.completions.create(
                 model=model_type, messages=messages, max_tokens=max_tokens, stream=True
             )
 
