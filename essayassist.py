@@ -3,9 +3,6 @@ import os
 import openai
 from openai import APIError
 
-# Set our OpenAI API Key from environment variable
-client = openai.OpenAI(api_key=os.environ.get('OPENAI_API_KEY'))
-
 # Check if API key is available
 API_KEY_AVAILABLE = bool(os.environ.get('OPENAI_API_KEY'))
 
