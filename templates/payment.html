@@ -337,7 +337,7 @@
                 <!-- Monthly Plan -->
                 <div class="plan-card recommended" onclick="selectPlan('monthly')">
                     <div class="plan-name">Monthly</div>
-                    <div class="plan-price">$19</div>
+                    <div class="plan-price">$9</div>
                     <div class="plan-period">per month</div>
                     <ul class="plan-features">
                         <li><i class="fas fa-check"></i> Unlimited essays</li>
@@ -351,14 +351,14 @@
                 <!-- Annual Plan -->
                 <div class="plan-card" onclick="selectPlan('annual')">
                     <div class="plan-name">Annual</div>
-                    <div class="plan-price">$149</div>
-                    <div class="plan-period">per year (save 35%)</div>
+                    <div class="plan-price">$79</div>
+                    <div class="plan-period">per year (save 27%)</div>
                     <ul class="plan-features">
                         <li><i class="fas fa-check"></i> Unlimited essays</li>
                         <li><i class="fas fa-check"></i> Advanced AI analysis</li>
                         <li><i class="fas fa-check"></i> Ivy League scoring</li>
                         <li><i class="fas fa-check"></i> Priority support</li>
-                        <li><i class="fas fa-check"></i> 35% savings</li>
+                        <li><i class="fas fa-check"></i> 27% savings</li>
                     </ul>
                     <button class="plan-button primary">Choose Annual</button>
                 </div>
@@ -396,8 +396,8 @@
         function selectPlan(plan) {
             selectedPlan = plan;
             const planNames = {
-                'monthly': 'Monthly Plan - $19/month',
-                'annual': 'Annual Plan - $149/year'
+                'monthly': 'Monthly Plan - $9/month',
+                'annual': 'Annual Plan - $79/year'
             };
             
             document.getElementById('selectedPlanName').textContent = planNames[plan];
