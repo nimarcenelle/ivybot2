@@ -210,8 +210,8 @@ def create_payment():
         
         # Define pricing
         prices = {
-            'monthly': 1900,  # $19.00 in cents
-            'annual': 14900   # $149.00 in cents
+            'monthly': 900,   # $9.00 in cents
+            'annual': 7900    # $79.00 in cents
         }
         
         if plan not in prices:
