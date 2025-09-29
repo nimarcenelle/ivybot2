@@ -1,101 +1,84 @@
-# Firebase Authentication Setup Guide
+# Stripe Payment Setup Guide
 
-## 1. Create Firebase Project
+## 1. Create Stripe Account
 
-1. Go to [Firebase Console](https://console.firebase.google.com/)
-2. Click "Create a project" or "Add project"
-3. Enter project name: "IvyLab" (or your preferred name)
-4. Enable Google Analytics (optional)
-5. Click "Create project"
+1. Go to [Stripe Dashboard](https://dashboard.stripe.com/)
+2. Sign up for a free account
+3. Complete account verification
 
-## 2. Add Web App to Firebase
+## 2. Get Your API Keys
 
-1. In your Firebase project, click the web icon `</>`
-2. Enter app nickname: "IvyLab Web"
-3. Check "Also set up Firebase Hosting" (optional)
-4. Click "Register app"
-5. Copy the Firebase configuration object
+1. In Stripe Dashboard, go to **Developers** → **API keys**
+2. Copy your **Publishable key** (starts with `pk_test_`)
+3. Copy your **Secret key** (starts with `sk_test_`)
 
 ## 3. Update Configuration
 
-1. Open `templates/auth.html`
-2. Find the `firebaseConfig` object (around line 20)
-3. Replace the placeholder values with your actual Firebase config:
-
+### Update Payment Template
+1. Open `templates/payment.html`
+2. Find line with `const stripe = Stripe('pk_test_your_publishable_key_here');`
+3. Replace with your actual publishable key:
 ```javascript
-const firebaseConfig = {
-    apiKey: "your-actual-api-key",
-    authDomain: "your-project-id.firebaseapp.com",
-    projectId: "your-project-id",
-    storageBucket: "your-project-id.appspot.com",
-    messagingSenderId: "your-actual-sender-id",
-    appId: "your-actual-app-id"
-};
+const stripe = Stripe('pk_test_your_actual_publishable_key');
 ```
 
-## 4. Enable Authentication
-
-1. In Firebase Console, go to "Authentication"
-2. Click "Get started"
-3. Go to "Sign-in method" tab
-4. Enable "Email/Password" provider
-5. Configure any additional settings as needed
-
-## 5. Set Environment Variables
-
-1. Create a `.env` file in your project root
-2. Add your secret key and Firebase service account:
-
+### Update Environment Variables
+1. Add to your `.env` file:
 ```
-SECRET_KEY=your-super-secret-key-here
-FIREBASE_SERVICE_ACCOUNT_JSON={"type":"service_account","project_id":"your-project-id",...}
+STRIPE_SECRET_KEY=sk_test_your_secret_key_here
 ```
 
-**OR** create a `firebase-service-account.json` file locally (this file is gitignored and won't be committed):
-```json
-{
-  "type": "service_account",
-  "project_id": "your-project-id",
-  "private_key_id": "your-private-key-id",
-  "private_key": "-----BEGIN PRIVATE KEY-----\nYOUR_PRIVATE_KEY\n-----END PRIVATE KEY-----\n",
-  "client_email": "your-service-account@your-project.iam.gserviceaccount.com",
-  "client_id": "your-client-id",
-  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-  "token_uri": "https://oauth2.googleapis.com/token",
-  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/your-service-account%40your-project.iam.gserviceaccount.com",
-  "universe_domain": "googleapis.com"
-}
-```
+## 4. Test the Payment Flow
 
-## 6. Test the Authentication
+1. Start your app: `python3 application.py`
+2. Go through the signup process
+3. You should be redirected to the payment page
+4. Try the "Free Trial" option first
+5. Test with Stripe test card: `4242 4242 4242 4242`
 
-1. Start your Flask app: `python3 application.py`
-2. Visit `http://localhost:5004/auth`
-3. Try creating an account and signing in
-4. Test the logout functionality
+## 5. Payment Plans
+
+### Free Trial
+- 3 essays free
+- 7-day access
+- No payment required
+
+### Monthly Plan
+- $9/month
+- Unlimited essays
+- Advanced features
+
+### Annual Plan
+- $79/year (27% savings)
+- All features included
+
+## 6. Test Cards (Stripe)
+
+- **Success**: `4242 4242 4242 4242`
+- **Decline**: `4000 0000 0000 0002`
+- **3D Secure**: `4000 0025 0000 3155`
+
+## 7. Production Setup
+
+When ready for production:
+1. Switch to live API keys in Stripe Dashboard
+2. Update your `.env` file with live keys
+3. Update the payment template with live publishable key
+4. Test with real payment methods
 
 ## Features Included
 
-- ✅ Email/Password authentication
-- ✅ Session management
-- ✅ Protected routes
-- ✅ User-friendly error messages
-- ✅ Responsive design matching your app
+- ✅ **Free trial** option
+- ✅ **Monthly and annual** plans
+- ✅ **Stripe payment** integration
+- ✅ **Session management** for subscription status
+- ✅ **Automatic redirects** based on payment status
+- ✅ **Beautiful UI** matching your app design
+- ✅ **Mobile responsive** design
 
 ## Security Notes
 
-- The Firebase config is safe to include in client-side code
-- User authentication is handled by Firebase
-- Sessions are managed server-side
-- All sensitive operations require authentication
-- **IMPORTANT**: Never commit `firebase-service-account.json` to version control
-- Use environment variables for production deployments
-- The service account file is automatically gitignored
-
-## Troubleshooting
-
-- Make sure your Firebase project has Authentication enabled
-- Check that your domain is authorized in Firebase Console
-- Verify your API keys are correct
-- Check browser console for any JavaScript errors
+- Never expose your secret key in frontend code
+- Use environment variables for sensitive data
+- Stripe handles all payment processing securely
+- User payment data is never stored on your server
