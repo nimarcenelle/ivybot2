@@ -1,6 +1,0 @@
-Flask==3.0.3
-gunicorn==22.0.0
-openai==1.0.0
-python-dotenv==1.0.1
-stripe==12.5.1
-firebase-admin==6.2.0
