@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In - IvyLab</title>
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a4d1a 0%, #2d6b2d 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .auth-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            width: 100%;
+            max-width: 400px;
+            position: relative;
+        }
+
+        .auth-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: #1a4d1a;
+        }
+
+        .auth-header {
+            text-align: center;
+            padding: 40px 30px 20px 30px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        }
+
+        .logo {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #1a4d1a;
+            margin-bottom: 8px;
+        }
+
+        .tagline {
+            color: #6c757d;
+            font-size: 0.95rem;
+        }
+
+        .auth-content {
+            padding: 30px;
+        }
+
+        .auth-tabs {
+            display: flex;
+            margin-bottom: 30px;
+            border-radius: 10px;
+            overflow: hidden;
+            background: #f8f9fa;
+        }
+
+        .auth-tab {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            background: transparent;
+            color: #6c757d;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .auth-tab.active {
+            background: #1a4d1a;
+            color: white;
+        }
+
+        .auth-form {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 6px;
+            color: #495057;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+            background: #f8f9fa;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #1a4d1a;
+            background: white;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary {
+            background: #1a4d1a;
+            color: white;
+            box-shadow: 0 4px 16px rgba(45, 80, 22, 0.3);
+        }
+
+        .btn-primary:hover {
+            background: #2d6b2d;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(45, 80, 22, 0.4);
+        }
+
+        .btn-primary:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid transparent;
+            border-top: 2px solid currentColor;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .message {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+            display: none;
+        }
+
+        .error-message {
+            background: #fef2f2;
+            color: #8B4513;
+            border: 1px solid #fecaca;
+        }
+
+        .success-message {
+            background: #f0fdf4;
+            color: #1a4d1a;
+            border: 1px solid #bbf7d0;
+        }
+
+        @media (max-width: 480px) {
+            .auth-container {
+                margin: 10px;
+                border-radius: 12px;
+            }
+            
+            .auth-header {
+                padding: 32px 24px 16px 24px;
+            }
+            
+            .auth-content {
+                padding: 32px 24px;
+            }
+            
+            .logo {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+    
+    <!-- Firebase SDK -->
+    <script type="module">
+        console.log('🔍 Firebase script loading... CACHE BUST: ' + new Date().getTime());
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js';
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from 'https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js';
+
+        // Your Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyD79kEh4mn8WbqGZtfU7XvyvafcYmt8gJg",
+            authDomain: "ivylab-d0d5e.firebaseapp.com",
+            projectId: "ivylab-d0d5e",
+            storageBucket: "ivylab-d0d5e.firebasestorage.app",
+            messagingSenderId: "635148919997",
+            appId: "1:635148919997:web:2b1aa62a7451316f1243d4",
+            measurementId: "G-R18MFLY6J2"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        
+        // Make Firebase functions globally available
+        window.signInWithEmailAndPassword = signInWithEmailAndPassword;
+        window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
+        window.updateProfile = updateProfile;
+        window.auth = auth;
+        
+        // Wait for DOM to be ready, then set up event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🔍 DOM loaded, setting up event listeners...');
+            setupEventListeners();
+        });
+        
+        function setupEventListeners() {
+            console.log('🔍 Setting up event listeners...');
+            
+            // Sign In
+            document.getElementById('signInForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                console.log('🔍 Sign in form submitted');
+                const email = document.getElementById('signInEmail').value;
+                const password = document.getElementById('signInPassword').value;
+                console.log('🔍 Email:', email, 'Password length:', password.length);
+
+                setLoading('signInBtn', true);
+
+                try {
+                    // Try Firebase Auth first
+                    console.log('🔍 Attempting Firebase Auth...');
+                    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                    const user = userCredential.user;
+                    console.log('🔍 Firebase Auth successful:', user.email);
+                    
+                    // Send user data to Flask backend
+                    const backendSuccess = await sendUserToBackend(user);
+                    
+                    if (backendSuccess) {
+                        showMessage('Successfully signed in!', 'success');
+                        setTimeout(() => {
+                            window.location.href = '/';
+                        }, 1000);
+                    } else {
+                        showMessage('Login successful, but session setup failed. Please try again.', 'error');
+                    }
+                } catch (error) {
+                    console.log('🔍 Firebase Auth failed:', error.code, error.message);
+                    // If Firebase Auth fails, try legacy login for whitelisted emails
+                           if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+                        console.log('🔍 Trying legacy login...');
+                        try {
+                            const response = await fetch('/login', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({
+                                    email: email
+                                })
+                            });
+                            
+                            const result = await response.json();
+                            
+                            if (result.success && result.legacy_user) {
+                                showMessage('Successfully signed in!', 'success');
+                                setTimeout(() => {
+                                    window.location.href = '/';
+                                }, 1000);
+                            } else {
+                                showMessage(getErrorMessage(error.code), 'error');
+                            }
+                        } catch (legacyError) {
+                            showMessage(getErrorMessage(error.code), 'error');
+                        }
+                    } else {
+                        showMessage(getErrorMessage(error.code), 'error');
+                    }
+                } finally {
+                    setLoading('signInBtn', false);
+                }
+            });
+            
+            // Sign Up
+            document.getElementById('signUpForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                console.log('🔍 Sign up form submitted');
+                const name = document.getElementById('signUpName').value;
+                const email = document.getElementById('signUpEmail').value;
+                const password = document.getElementById('signUpPassword').value;
+                const confirmPassword = document.getElementById('signUpConfirmPassword').value;
+
+                if (password !== confirmPassword) {
+                    showMessage('Passwords do not match', 'error');
+                    return;
+                }
+
+                setLoading('signUpBtn', true);
+
+                try {
+                    console.log('🔍 Attempting Firebase Auth signup...');
+                    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                    const user = userCredential.user;
+                    console.log('🔍 Firebase Auth signup successful:', user.email);
+                    
+                    // Update display name
+                    await updateProfile(user, { displayName: name });
+                    
+                    // Send user data to Flask backend
+                    const backendSuccess = await sendUserToBackend(user);
+                    
+                    if (backendSuccess) {
+                        showMessage('Account created successfully!', 'success');
+                        setTimeout(() => {
+                            window.location.href = '/';
+                        }, 1000);
+                    } else {
+                        showMessage('Account created, but session setup failed. Please try signing in.', 'error');
+                    }
+                } catch (error) {
+                    console.log('🔍 Firebase Auth signup failed:', error.code, error.message);
+                    showMessage(getErrorMessage(error.code), 'error');
+                } finally {
+                    setLoading('signUpBtn', false);
+                }
+            });
+        }
+        
+        // Function to send user data to Flask backend with Firebase Auth token
+        async function sendUserToBackend(user) {
+            try {
+                console.log('Sending user data to backend:', user);
+                
+                // Get the Firebase Auth ID token
+                const idToken = await user.getIdToken();
+                console.log('Got Firebase Auth token:', idToken ? 'Yes' : 'No');
+                
+                const response = await fetch('/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        idToken: idToken,
+                        uid: user.uid,
+                        email: user.email,
+                        displayName: user.displayName || user.email.split('@')[0]
+                    })
+                });
+                const result = await response.json();
+                console.log('Backend response:', result);
+                return result.success;
+            } catch (error) {
+                console.error('Error sending user data to backend:', error);
+                return false;
+            }
+        }
+        
+        function getErrorMessage(errorCode) {
+            switch (errorCode) {
+                case 'auth/user-not-found':
+                    return 'No account found with this email';
+                case 'auth/wrong-password':
+                    return 'Incorrect password';
+                case 'auth/invalid-email':
+                    return 'Invalid email address';
+                case 'auth/user-disabled':
+                    return 'This account has been disabled';
+                case 'auth/too-many-requests':
+                    return 'Too many failed attempts. Please try again later';
+                case 'auth/email-already-in-use':
+                    return 'An account with this email already exists';
+                case 'auth/weak-password':
+                    return 'Password should be at least 6 characters';
+                default:
+                    return 'An error occurred. Please try again';
+            }
+        }
+        
+        function setLoading(buttonId, isLoading) {
+            const button = document.getElementById(buttonId);
+            const textElement = button.querySelector('.btn-text');
+            
+            if (isLoading) {
+                button.disabled = true;
+                textElement.innerHTML = '<span class="spinner"></span> Loading...';
+            } else {
+                button.disabled = false;
+                textElement.innerHTML = buttonId === 'signInBtn' ? 'Sign In' : 'Create Account';
+            }
+        }
+        
+        function showMessage(message, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = message;
+            messageDiv.className = `message ${type}-message`;
+            messageDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 5000);
+        }
+        
+        // Global functions for tab switching
+        window.showSignIn = function() {
+            document.getElementById('signInForm').style.display = 'block';
+            document.getElementById('signUpForm').style.display = 'none';
+            document.querySelectorAll('.auth-tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+        };
+
+        window.showSignUp = function() {
+            document.getElementById('signInForm').style.display = 'none';
+            document.getElementById('signUpForm').style.display = 'block';
+            document.querySelectorAll('.auth-tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+        };
+
+        // Auto-login for existing users
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                console.log('User already signed in:', user);
+                sendUserToBackend(user).then(success => {
+                    if (success) {
+                        window.location.href = '/';
+                    }
+                });
+            }
+        });
+    </script>
+</head>
+<body>
+    <div class="auth-container">
+        <!-- Header -->
+        <div class="auth-header">
+            <div class="logo">IvyLab</div>
+            <div class="tagline">Sign in to access your essay analysis</div>
+        </div>
+
+        <!-- Content -->
+        <div class="auth-content">
+            <!-- Tabs -->
+            <div class="auth-tabs">
+                <button class="auth-tab active" onclick="showSignIn()">Sign In</button>
+                <button class="auth-tab" onclick="showSignUp()">Sign Up</button>
+            </div>
+
+            <!-- Error/Success Messages -->
+            <div id="message" class="message"></div>
+
+            <!-- Sign In Form -->
+            <form id="signInForm" class="auth-form">
+                <div class="form-group">
+                    <label class="form-label" for="signInEmail">Email</label>
+                    <input type="email" id="signInEmail" class="form-control" placeholder="Enter your email" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="signInPassword">Password</label>
+                    <input type="password" id="signInPassword" class="form-control" placeholder="Enter your password" required>
+                </div>
+                <button type="submit" class="btn btn-primary" id="signInBtn">
+                    <span class="btn-text">Sign In</span>
+                </button>
+            </form>
+
+            <!-- Sign Up Form -->
+            <form id="signUpForm" class="auth-form" style="display: none;">
+                <div class="form-group">
+                    <label class="form-label" for="signUpName">Full Name</label>
+                    <input type="text" id="signUpName" class="form-control" placeholder="Enter your full name" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="signUpEmail">Email</label>
+                    <input type="email" id="signUpEmail" class="form-control" placeholder="Enter your email" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="signUpPassword">Password</label>
+                    <input type="password" id="signUpPassword" class="form-control" placeholder="Enter your password" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="signUpConfirmPassword">Confirm Password</label>
+                    <input type="password" id="signUpConfirmPassword" class="form-control" placeholder="Confirm your password" required>
+                </div>
+                <button type="submit" class="btn btn-primary" id="signUpBtn">
+                    <span class="btn-text">Create Account</span>
+                </button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

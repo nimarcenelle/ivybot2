@@ -1,0 +1,21 @@
+# Environment Variables Configuration
+# Copy this file to .env and add your actual values
+
+# OpenAI API Key
+OPENAI_API_KEY=your_openai_api_key_here
+
+# Flask Secret Key
+SECRET_KEY=your-super-secret-key-here
+
+# Stripe Keys (Live Mode)
+STRIPE_SECRET_KEY=sk_live_your_stripe_secret_key_here
+STRIPE_PUBLISHABLE_KEY=pk_live_your_stripe_publishable_key_here
+
+# Firebase Service Account (JSON as string)
+FIREBASE_SERVICE_ACCOUNT_JSON={"type":"service_account","project_id":"your-project-id",...}
+
+# Instructions:
+# 1. Get your API keys from the respective services
+# 2. Copy this file to .env
+# 3. Replace the placeholder values with your actual keys
+# 4. Never commit the .env file to version control

@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to IvyLab</title>
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700&family=Inter:wght@400;500;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #f8f6f0 0%, #f0ede4 100%), 
+                        url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="parchment" x="0" y="0" width="100" height="100" patternUnits="userSpaceOnUse"><rect width="100" height="100" fill="%23f8f6f0"/><circle cx="20" cy="20" r="1" fill="%23e8e4d8" opacity="0.3"/><circle cx="80" cy="30" r="0.5" fill="%23e8e4d8" opacity="0.2"/><circle cx="40" cy="70" r="0.8" fill="%23e8e4d8" opacity="0.25"/></pattern></defs><rect width="100" height="100" fill="url(%23parchment)"/></svg>');
+            color: #1a1a1a;
+            line-height: 1.6;
+            font-size: 16px;
+            font-weight: 400;
+            height: 100vh;
+            padding: 10px;
+            overflow: hidden;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border: 2px solid #e2e8f0;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(26, 54, 93, 0.12), 0 2px 8px rgba(26, 54, 93, 0.08);
+            overflow: hidden;
+            position: relative;
+            height: calc(100vh - 20px);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #1a4d1a 0%, #8B4513 50%, #1a4d1a 100%);
+            border-radius: 16px 16px 0 0;
+        }
+        
+        .header {
+            text-align: center;
+            padding: 16px 40px 12px 40px;
+            background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+            border-bottom: 1px solid #e2e8f0;
+            flex-shrink: 0;
+        }
+        
+        .logo {
+            font-family: 'Merriweather', serif;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #1a365d;
+            margin-bottom: 4px;
+            letter-spacing: -0.02em;
+            text-shadow: 0 2px 4px rgba(26, 54, 93, 0.1);
+        }
+        
+        .tagline {
+            font-size: 0.85rem;
+            color: #4a5568;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+        
+        .trust-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, rgba(26, 54, 93, 0.1) 0%, rgba(26, 54, 93, 0.05) 100%);
+            color: #1a365d;
+            padding: 8px 16px;
+            border-radius: 25px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            border: 1px solid rgba(212, 175, 55, 0.3);
+        }
+        
+        .trust-badge .divider {
+            color: #d4af37;
+            font-weight: 700;
+        }
+        
+        .content {
+            padding: 12px 40px;
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .welcome-title {
+            font-family: 'Merriweather', serif;
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #1a365d;
+            margin-bottom: 8px;
+            text-align: center;
+            line-height: 1.2;
+            text-shadow: 0 2px 4px rgba(26, 54, 93, 0.1);
+        }
+        
+        .welcome-subtitle {
+            font-size: 0.9rem;
+            color: #4a5568;
+            text-align: center;
+            margin-bottom: 16px;
+            line-height: 1.4;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin: 12px 0;
+            flex: 1;
+        }
+        
+        .feature {
+            background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 16px rgba(26, 54, 93, 0.05);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .feature:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 32px rgba(26, 54, 93, 0.1);
+        }
+        
+        .feature-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #1a4d1a 0%, #2d6b2d 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 8px;
+            font-size: 16px;
+            color: white;
+            box-shadow: 0 4px 16px rgba(26, 54, 93, 0.3);
+        }
+        
+        .feature-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #1a365d;
+            margin-bottom: 4px;
+        }
+        
+        .feature-description {
+            font-size: 0.8rem;
+            color: #6b7280;
+            line-height: 1.3;
+        }
+        
+        .how-it-works {
+            background: linear-gradient(135deg, #f0f8f0 0%, #e8f5e8 100%);
+            border: 2px solid #0ea5e9;
+            border-radius: 12px;
+            padding: 16px;
+            margin: 12px 0;
+            text-align: center;
+            flex-shrink: 0;
+        }
+        
+        .how-it-works h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #0c4a6e;
+            margin-bottom: 8px;
+        }
+        
+        .how-it-works p {
+            font-size: 0.85rem;
+            color: #0369a1;
+            line-height: 1.4;
+            margin-bottom: 12px;
+        }
+        
+        .success-stats {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 12px;
+        }
+        
+        .stat {
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #0c4a6e;
+            margin-bottom: 4px;
+        }
+        
+        .stat-label {
+            font-size: 0.8rem;
+            color: #0369a1;
+            font-weight: 500;
+        }
+        
+        .buttons {
+            text-align: center;
+            margin-top: 20px;
+            padding: 16px 40px;
+            background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+            border-top: 1px solid #e2e8f0;
+            flex-shrink: 0;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #1a4d1a 0%, #2d6b2d 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 12px 32px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 6px 20px rgba(26, 54, 93, 0.4);
+            margin: 0 10px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(15, 43, 92, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #f8fafc;
+            color: #6b7280;
+            border: 2px solid #e2e8f0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-secondary:hover {
+            background: #e2e8f0;
+            color: #4a5568;
+            transform: translateY(-1px);
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                border-radius: 12px;
+            }
+            
+            .header {
+                padding: 32px 24px 16px 24px;
+            }
+            
+            .content {
+                padding: 32px 24px;
+            }
+            
+            .buttons {
+                padding: 20px 24px;
+            }
+            
+            .logo {
+                font-size: 2rem;
+            }
+            
+            .welcome-title {
+                font-size: 1.5rem;
+            }
+            
+            .features {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+            
+            .success-stats {
+                flex-direction: column;
+                gap: 16px;
+            }
+            
+            .stat-number {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo">IvyLab</div>
+            <div class="tagline">The AI that got 800+ students into Ivy League schools</div>
+            <div class="trust-badge">
+                <i class="fas fa-trophy"></i>
+                <span>800+ Ivy League admits</span>
+            </div>
+        </div>
+
+        <!-- Content -->
+        <div class="content">
+            <h1 class="welcome-title">Turn your essay into an Ivy League acceptance</h1>
+            <p class="welcome-subtitle">
+                Get admissions-style feedback distilled from 10,000+ successful Ivy essays—so you know exactly what to fix before you apply.
+            </p>
+            
+            <div class="features">
+                <div class="feature">
+                    <div class="feature-icon">
+                        <i class="fas fa-brain"></i>
+                    </div>
+                    <div class="feature-title">Ivy League AI</div>
+                    <div class="feature-description">Trained on 10,000+ successful essays to identify what actually wins admits.</div>
+                </div>
+                
+                <div class="feature">
+                    <div class="feature-icon">
+                        <i class="fas fa-bolt"></i>
+                    </div>
+                    <div class="feature-title">Instant Feedback</div>
+                    <div class="feature-description">Detailed, category-by-category analysis in seconds.</div>
+                </div>
+                
+                <div class="feature">
+                    <div class="feature-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="feature-title">Admissions-Style Score</div>
+                    <div class="feature-description">See how an admissions reader would rate your essay—and why.</div>
+                </div>
+                
+                <div class="feature">
+                    <div class="feature-icon">
+                        <i class="fas fa-edit"></i>
+                    </div>
+                    <div class="feature-title">Actionable Improvements</div>
+                    <div class="feature-description">Specific, concrete edits to raise your score fast.</div>
+                </div>
+            </div>
+            
+            <div class="how-it-works">
+                <h3>How it works</h3>
+                <p>Paste your essay → Get instant analysis → Apply fixes → Improve your odds</p>
+                <div class="success-stats">
+                    <div class="stat">
+                        <div class="stat-number">800+</div>
+                        <div class="stat-label">Ivy League Admits</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-number">10,000+</div>
+                        <div class="stat-label">Training Essays</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-number">3×</div>
+                        <div class="stat-label">Better Odds After Revisions</div>
+                    </div>
+                </div>
+                <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 12px; text-align: center;">
+                    Based on historical cohorts and self-reported outcomes.
+                </div>
+            </div>
+        </div>
+        
+        <!-- Buttons -->
+        <div class="buttons">
+            <a href="/" class="btn">
+                <i class="fas fa-rocket"></i> Get My Ivy Analysis
+            </a>
+            <a href="/" class="btn btn-secondary">
+                <i class="fas fa-forward"></i> Explore the App
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Mark onboarding as completed when user clicks either button
+        function completeOnboarding() {
+            localStorage.setItem('ivylab_onboarding_completed', 'true');
+            localStorage.setItem('ivylab_onboarding_date', new Date().toISOString());
+        }
+        
+        // Add click handlers to both buttons
+        document.addEventListener('DOMContentLoaded', function() {
+            const buttons = document.querySelectorAll('.btn');
+            buttons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    completeOnboarding();
+                    window.location.href = '/auth';
+                });
+            });
+        });
+    </script>
+</body>
+</html>
