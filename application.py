@@ -1127,6 +1127,153 @@ def reactivate_subscription():
     except Exception as e:
         return jsonify({"success": False, "message": f"Error: {str(e)}"}), 500
 
+@application.route("/buy-human-review")
+def buy_human_review():
+    """Create Stripe Checkout Session for human review"""
+    try:
+        # Get user info if logged in (optional - can be anonymous)
+        user_email = session.get('user_email')
+        user_id = session.get('user_id')
+        
+        # Get base URL for redirects
+        base_url = request.host_url.rstrip('/')
+        
+        # Create Stripe Checkout Session for one-time payment
+        # Set price - you can adjust this amount (in cents)
+        # Example: $49.99 = 4999 cents
+        checkout_session = stripe.checkout.Session.create(
+            payment_method_types=['card'],
+            line_items=[{
+                'price_data': {
+                    'currency': 'usd',
+                    'product_data': {
+                        'name': 'Ivy League Graduate Review',
+                        'description': 'Get your essay reviewed by an Ivy League graduate. After payment, you\'ll be able to input your essay on the next page.'
+                    },
+                    'unit_amount': 4999,  # $49.99 in cents - adjust as needed
+                },
+                'quantity': 1,
+            }],
+            mode='payment',
+            success_url=base_url + '/human-review-success?session_id={CHECKOUT_SESSION_ID}',
+            cancel_url=base_url + '/buy-human-review?canceled=true',
+            metadata={
+                'type': 'human_review',
+                'user_id': user_id or 'anonymous',
+                'user_email': user_email or 'unknown'
+            },
+            customer_email=user_email if user_email else None,
+        )
+        
+        print(f"✅ Created checkout session for human review: {checkout_session.id}")
+        
+        # Redirect to Stripe Checkout
+        return redirect(checkout_session.url, code=303)
+        
+    except stripe.error.StripeError as e:
+        print(f"❌ Stripe error creating checkout: {e}")
+        return jsonify({"error": f"Payment error: {str(e)}"}), 500
+    except Exception as e:
+        print(f"❌ Error creating checkout: {e}")
+        return jsonify({"error": f"Error: {str(e)}"}), 500
+
+@application.route("/human-review-success")
+def human_review_success():
+    """Show essay submission form after successful payment"""
+    try:
+        session_id = request.args.get('session_id')
+        
+        if not session_id:
+            return redirect(url_for('index'))
+        
+        # Verify the checkout session
+        checkout_session = stripe.checkout.Session.retrieve(session_id)
+        
+        # Check if payment was successful
+        if checkout_session.payment_status != 'paid':
+            return redirect(url_for('buy_human_review'))
+        
+        # Store session_id in Flask session for verification
+        session['human_review_session_id'] = session_id
+        session['human_review_paid'] = True
+        
+        # Render the submission form
+        return render_template("human_review_submit.html", session_id=session_id)
+        
+    except stripe.error.StripeError as e:
+        print(f"❌ Error retrieving checkout session: {e}")
+        return redirect(url_for('buy_human_review'))
+    except Exception as e:
+        print(f"❌ Error in success page: {e}")
+        return redirect(url_for('buy_human_review'))
+
+@application.route("/submit-human-review", methods=["POST"])
+def submit_human_review():
+    """Handle essay submission for human review"""
+    try:
+        data = request.get_json()
+        email = data.get('email')
+        essay = data.get('essay')
+        session_id = data.get('session_id')
+        
+        # Verify payment was completed
+        if not session.get('human_review_paid') or not session.get('human_review_session_id'):
+            return jsonify({"success": False, "message": "Payment verification failed"}), 400
+        
+        if session_id != session.get('human_review_session_id'):
+            return jsonify({"success": False, "message": "Invalid session"}), 400
+        
+        if not email or not essay:
+            return jsonify({"success": False, "message": "Email and essay are required"}), 400
+        
+        if len(essay) < 100:
+            return jsonify({"success": False, "message": "Essay must be at least 100 characters"}), 400
+        
+        # Retrieve checkout session to get payment details
+        try:
+            checkout_session = stripe.checkout.Session.retrieve(session_id)
+            customer_email = checkout_session.customer_details.email if checkout_session.customer_details else email
+        except:
+            customer_email = email
+        
+        # Save to Firestore for admin review
+        if db:
+            try:
+                review_id = db.collection('human_reviews').document().id
+                review_data = {
+                    'email': email,
+                    'essay': essay,
+                    'session_id': session_id,
+                    'customer_email': customer_email,
+                    'status': 'pending',
+                    'submitted_at': datetime.now().isoformat(),
+                    'reviewed_at': None,
+                    'reviewed_by': None
+                }
+                
+                db.collection('human_reviews').document(review_id).set(review_data)
+                print(f"✅ Saved human review submission: {review_id} for {email}")
+                
+                # Also send email notification (optional - requires email service)
+                # You can add email sending here if you have an email service set up
+                
+            except Exception as e:
+                print(f"❌ Error saving to Firestore: {e}")
+                # Still return success but log the error
+        
+        # Clear the session flags
+        session.pop('human_review_paid', None)
+        session.pop('human_review_session_id', None)
+        
+        return jsonify({
+            "success": True,
+            "message": "Thank you! You'll receive your reviewed essay by email soon."
+        })
+        
+    except Exception as e:
+        print(f"❌ Error submitting review: {e}")
+        return jsonify({"success": False, "message": f"Error: {str(e)}"}), 500
+
 # === Main routes ===
 @application.route("/landing")
 def landing():
