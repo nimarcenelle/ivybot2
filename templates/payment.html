@@ -337,7 +337,7 @@
                 <!-- Weekly Plan -->
                 <div class="plan-card" onclick="selectPlan('weekly')">
                     <div class="plan-name">Weekly</div>
-                    <div class="plan-price">$7.99</div>
+                    <div class="plan-price">$9.99</div>
                     <div class="plan-period">per week</div>
                     <ul class="plan-features">
                         <li><i class="fas fa-check"></i> Unlimited essays</li>
@@ -351,7 +351,7 @@
                 <!-- Monthly Plan -->
                 <div class="plan-card recommended" onclick="selectPlan('monthly')">
                     <div class="plan-name">Monthly</div>
-                    <div class="plan-price">$29.99</div>
+                    <div class="plan-price">$24.99</div>
                     <div class="plan-period">per month</div>
                     <ul class="plan-features">
                         <li><i class="fas fa-check"></i> Unlimited essays</li>
@@ -396,8 +396,8 @@
         function selectPlan(plan) {
             selectedPlan = plan;
             const planNames = {
-                'weekly': 'Weekly Plan - $7.99/week',
-                'monthly': 'Monthly Plan - $29.99/month'
+                'weekly': 'Weekly Plan - $9.99/week',
+                'monthly': 'Monthly Plan - $24.99/month'
             };
             
             document.getElementById('selectedPlanName').textContent = planNames[plan];
