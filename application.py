@@ -242,32 +242,42 @@ def get_or_create_stripe_products():
         weekly_price = None
         monthly_price = None
         
-        # Check for existing prices
+        # Expected amounts in cents
+        expected_weekly_amount = 999  # $9.99
+        expected_monthly_amount = 2499  # $24.99
+        
+        # Check for existing prices with correct amounts
         prices = stripe.Price.list(limit=20)
         for price in prices.data:
             if price.product == weekly_product.id and price.recurring and price.recurring.interval == 'week':
-                weekly_price = price
+                # Only use this price if it matches our expected amount
+                if price.unit_amount == expected_weekly_amount:
+                    weekly_price = price
+                    print(f"✅ Found existing weekly price: {weekly_price.id} (${weekly_price.unit_amount/100:.2f})")
             elif price.product == monthly_product.id and price.recurring and price.recurring.interval == 'month':
-                monthly_price = price
+                # Only use this price if it matches our expected amount
+                if price.unit_amount == expected_monthly_amount:
+                    monthly_price = price
+                    print(f"✅ Found existing monthly price: {monthly_price.id} (${monthly_price.unit_amount/100:.2f})")
         
-        # Create prices if they don't exist
+        # Create prices if they don't exist or have wrong amounts
         if not weekly_price:
             weekly_price = stripe.Price.create(
-                unit_amount=999,  # $9.99 in cents
+                unit_amount=expected_weekly_amount,  # $9.99 in cents
                 currency='usd',
                 recurring={'interval': 'week'},
                 product=weekly_product.id,
             )
-            print(f"✅ Created weekly price: {weekly_price.id}")
+            print(f"✅ Created weekly price: {weekly_price.id} (${expected_weekly_amount/100:.2f})")
         
         if not monthly_price:
             monthly_price = stripe.Price.create(
-                unit_amount=2499,  # $24.99 in cents
+                unit_amount=expected_monthly_amount,  # $24.99 in cents
                 currency='usd',
                 recurring={'interval': 'month'},
                 product=monthly_product.id,
             )
-            print(f"✅ Created monthly price: {monthly_price.id}")
+            print(f"✅ Created monthly price: {monthly_price.id} (${expected_monthly_amount/100:.2f})")
         
         return {
             'weekly': weekly_price.id,
