@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Submit Your Essay - Ivy League Graduate Review</title>
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Crimson Text', Georgia, 'Times New Roman', serif;
+            background: linear-gradient(135deg, #f8f6f0 0%, #f0ede4 100%);
+            color: #1a1a1a;
+            line-height: 1.6;
+            font-size: 16px;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border: 2px solid #e2e8f0;
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(26, 54, 93, 0.12), 0 2px 8px rgba(26, 54, 93, 0.08);
+            overflow: hidden;
+            position: relative;
+            padding: 40px;
+        }
+        
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #1a4d1a 0%, #8B4513 50%, #1a4d1a 100%);
+            border-radius: 20px 20px 0 0;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        
+        .header h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #1a4d1a;
+            margin-bottom: 12px;
+        }
+        
+        .header p {
+            color: #4a5568;
+            font-size: 1.1rem;
+        }
+        
+        .success-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: 600;
+            margin-bottom: 24px;
+            font-size: 14px;
+        }
+        
+        .form-group {
+            margin-bottom: 24px;
+        }
+        
+        .form-label {
+            display: block;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            background: white;
+            font-family: inherit;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: #1a4d1a;
+            box-shadow: 0 0 0 4px rgba(26, 77, 26, 0.1);
+        }
+        
+        textarea.form-control {
+            min-height: 300px;
+            resize: vertical;
+            font-family: inherit;
+        }
+        
+        .char-count {
+            text-align: right;
+            color: #6b7280;
+            font-size: 12px;
+            margin-top: 4px;
+        }
+        
+        .submit-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #1a4d1a 0%, #2d6b2d 100%);
+            color: white;
+            border: none;
+            padding: 16px 24px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 6px 20px rgba(26, 77, 26, 0.4);
+        }
+        
+        .submit-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(26, 77, 26, 0.5);
+        }
+        
+        .submit-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .message {
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+            display: none;
+        }
+        
+        .message.success {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            color: #166534;
+        }
+        
+        .message.error {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #dc2626;
+        }
+        
+        .thank-you-message {
+            display: none;
+            text-align: center;
+            padding: 40px 20px;
+        }
+        
+        .thank-you-message.show {
+            display: block;
+        }
+        
+        .thank-you-icon {
+            font-size: 64px;
+            color: #10b981;
+            margin-bottom: 20px;
+        }
+        
+        .thank-you-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1a4d1a;
+            margin-bottom: 16px;
+        }
+        
+        .thank-you-text {
+            color: #4a5568;
+            font-size: 1.1rem;
+            margin-bottom: 24px;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 24px;
+                margin: 10px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="success-badge">
+                <i class="fas fa-check-circle"></i>
+                Payment Successful!
+            </div>
+            <h1>Submit Your Essay</h1>
+            <p>Get personalized feedback from an <strong>Ivy League graduate</strong>. On this page, you can input your essay below. Please provide your email and paste your essay - you'll receive your reviewed essay by email within 48 hours.</p>
+            <div style="background: #e0f2fe; border-left: 4px solid #0ea5e9; padding: 12px 16px; border-radius: 8px; margin-top: 16px;">
+                <p style="margin: 0; color: #0c4a6e; font-size: 14px;">
+                    <i class="fas fa-info-circle"></i> <strong>Next Step:</strong> Input your essay in the form below. This is where you paste your essay for review.
+                </p>
+            </div>
+        </div>
+        
+        <div id="message" class="message"></div>
+        
+        <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 2px solid #f59e0b; border-radius: 12px; padding: 20px; margin-bottom: 24px; text-align: center;">
+            <div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 8px;">
+                <i class="fas fa-graduation-cap" style="color: #1a4d1a; font-size: 24px;"></i>
+                <strong style="color: #1a4d1a; font-size: 18px;">Reviewed by an Ivy League Graduate</strong>
+            </div>
+            <p style="color: #78350f; margin: 0; font-size: 14px;">Your essay will be personally reviewed by a verified Ivy League graduate with expertise in admissions essays</p>
+        </div>
+        
+        <div id="submissionForm">
+            <form id="essayForm">
+                <input type="hidden" id="session_id" value="{{ session_id }}">
+                
+                <div class="form-group">
+                    <label for="email" class="form-label">
+                        <i class="fas fa-envelope"></i> Your Email Address
+                    </label>
+                    <input 
+                        type="email" 
+                        id="email" 
+                        class="form-control" 
+                        placeholder="your.email@example.com"
+                        required
+                    >
+                </div>
+                
+                <div class="form-group">
+                    <label for="essay" class="form-label">
+                        <i class="fas fa-file-alt"></i> Your Essay
+                    </label>
+                    <textarea 
+                        id="essay" 
+                        class="form-control" 
+                        placeholder="Paste your college essay here..."
+                        required
+                    ></textarea>
+                    <div class="char-count">
+                        <span id="charCount">0</span> characters
+                    </div>
+                </div>
+                
+                <button type="submit" class="submit-btn" id="submitBtn">
+                    <i class="fas fa-paper-plane"></i>
+                    <span id="submitBtnText">Submit Essay</span>
+                </button>
+            </form>
+        </div>
+        
+        <div id="thankYouMessage" class="thank-you-message">
+            <div class="thank-you-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="thank-you-title">Thank You!</div>
+            <div class="thank-you-text">
+                Your essay has been submitted successfully! An <strong>Ivy League graduate</strong> will review it and send you personalized feedback within 48 hours.
+            </div>
+            <a href="/" class="submit-btn" style="max-width: 300px; margin: 0 auto;">
+                <i class="fas fa-home"></i> Return to Home
+            </a>
+        </div>
+    </div>
+    
+    <script>
+        const emailInput = document.getElementById('email');
+        const essayInput = document.getElementById('essay');
+        const charCount = document.getElementById('charCount');
+        const form = document.getElementById('essayForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const submitBtnText = document.getElementById('submitBtnText');
+        const messageDiv = document.getElementById('message');
+        const submissionForm = document.getElementById('submissionForm');
+        const thankYouMessage = document.getElementById('thankYouMessage');
+        const sessionId = document.getElementById('session_id').value;
+        
+        // Character counter
+        essayInput.addEventListener('input', function() {
+            const count = this.value.length;
+            charCount.textContent = count;
+            
+            if (count < 100) {
+                charCount.style.color = '#ef4444';
+            } else {
+                charCount.style.color = '#6b7280';
+            }
+        });
+        
+        function showMessage(message, type) {
+            messageDiv.textContent = message;
+            messageDiv.className = `message ${type}`;
+            messageDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 5000);
+        }
+        
+        function setLoading(isLoading) {
+            if (isLoading) {
+                submitBtn.disabled = true;
+                submitBtnText.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+            } else {
+                submitBtn.disabled = false;
+                submitBtnText.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Essay';
+            }
+        }
+        
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const email = emailInput.value.trim();
+            const essay = essayInput.value.trim();
+            
+            if (!email || !essay) {
+                showMessage('Please fill in all fields', 'error');
+                return;
+            }
+            
+            if (essay.length < 100) {
+                showMessage('Essay must be at least 100 characters', 'error');
+                return;
+            }
+            
+            setLoading(true);
+            
+            try {
+                const response = await fetch('/submit-human-review', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        essay: essay,
+                        session_id: sessionId
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Hide form and show thank you message
+                    submissionForm.style.display = 'none';
+                    thankYouMessage.classList.add('show');
+                } else {
+                    showMessage(result.message || 'Submission failed. Please try again.', 'error');
+                    setLoading(false);
+                }
+            } catch (error) {
+                console.error('Submission error:', error);
+                showMessage('An error occurred. Please try again.', 'error');
+                setLoading(false);
+            }
+        });
+    </script>
+</body>
+</html>
+
