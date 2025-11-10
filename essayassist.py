@@ -247,9 +247,93 @@ Format your response with each category as a section, followed by the overall sc
         return str(e)
 
 
+def rewrite_essay(essay_text):
+    """Rewrite an essay to make it better using OpenAI"""
+    # If no API key, return demo response
+    if not is_api_key_available():
+        def demo_stream():
+            demo_text = "This is a demo rewrite. Add your OpenAI API key for real AI-powered essay rewriting."
+            for word in demo_text.split():
+                yield word + " "
+                import time
+                time.sleep(0.05)
+        return demo_stream()
+    
+    # Check if API key is valid by testing it first
+    try:
+        test_client = openai.OpenAI(api_key=os.environ.get('OPENAI_API_KEY'))
+        test_client.chat.completions.create(
+            model='gpt-3.5-turbo',
+            messages=[{'role': 'user', 'content': 'test'}],
+            max_tokens=1
+        )
+    except Exception as e:
+        if "invalid_api_key" in str(e) or "Incorrect API key" in str(e):
+            print("⚠️ Invalid API key detected, using demo response")
+            def demo_stream():
+                demo_text = "This is a demo rewrite. Add your OpenAI API key for real AI-powered essay rewriting."
+                for word in demo_text.split():
+                    yield word + " "
+                    import time
+                    time.sleep(0.05)
+            return demo_stream()
+        else:
+            print(f"⚠️ API error: {e}, using demo response")
+            def demo_stream():
+                demo_text = "This is a demo rewrite. Add your OpenAI API key for real AI-powered essay rewriting."
+                for word in demo_text.split():
+                    yield word + " "
+                    import time
+                    time.sleep(0.05)
+            return demo_stream()
+    
+    request_data = {
+        "role": "user",
+        "content": f"""
+Rewrite this college essay to make it significantly better while preserving the core message and personal voice. 
+
+Here is the original essay:
+{essay_text}
+
+IMPORTANT INSTRUCTIONS:
+1. Maintain the author's authentic voice and personal experiences - do not change the fundamental story
+2. Improve clarity, flow, and impact while keeping the same length (approximately the same word count)
+3. Enhance vivid details, emotional depth, and specific examples where appropriate
+4. Strengthen transitions between paragraphs
+5. Remove clichés and generic language, replace with more specific and authentic expressions
+6. Improve sentence variety and structure for better readability
+7. Deepen personal reflection and show growth more clearly
+8. Make connections to larger themes more explicit
+9. Ensure the essay maintains its unique perspective and doesn't sound generic
+10. Keep the same first-person perspective and narrative structure
+11. Do NOT add a title or any meta-commentary - just output the rewritten essay
+
+Output ONLY the rewritten essay, nothing else. Do not include explanations, notes, or markdown formatting.
+""",
+    }
+    try:
+        response = generate_response(
+            model_type="gpt-4",
+            messages=[
+                {
+                    "role": "system",
+                    "content": """You are an expert college essay editor with deep knowledge of what makes essays compelling for top universities. You rewrite essays to improve them while preserving the author's authentic voice and core message. You focus on enhancing clarity, specificity, emotional depth, and impact without changing the fundamental story or making it sound generic."""
+                },
+                request_data,
+            ],
+            max_tokens=4000,
+        )
+        return response
+    except Exception as e:
+        print(f"Error in rewrite_essay: {e}")
+        def error_stream():
+            yield f"Error occurred while rewriting: {str(e)}"
+        return error_stream()
+
+
 def generate_essay(outline):
     # If no API key, return demo response
-    if not API_KEY_AVAILABLE:
+    if not is_api_key_available():
         return demo_generate_response(outline)
     
     request_data = {

@@ -26,7 +26,7 @@ from flask import (
 )
 
 ### Importing Required Files
-from essayassist import analyze_essay, generate_essay
+from essayassist import analyze_essay, generate_essay, rewrite_essay
 
 ### End of Imports ###
 
@@ -1131,6 +1131,18 @@ def reactivate_subscription():
 def buy_human_review():
     """Create Stripe Checkout Session for human review"""
     try:
+        # Check if user canceled the checkout - redirect to index to prevent loop
+        if request.args.get('canceled') == 'true':
+            # Clear any checkout session state
+            session.pop('checkout_session_id', None)
+            return redirect(url_for('index'))
+        
+        # Check if user is coming back from Stripe via browser back button
+        # If referrer is from Stripe and no canceled param, redirect to index
+        referrer = request.headers.get('Referer', '')
+        if 'checkout.stripe.com' in referrer and 'canceled' not in request.args:
+            return redirect(url_for('index'))
+        
         # Get user info if logged in (optional - can be anonymous)
         user_email = session.get('user_email')
         user_id = session.get('user_id')
@@ -1156,7 +1168,7 @@ def buy_human_review():
             }],
             mode='payment',
             success_url=base_url + '/human-review-success?session_id={CHECKOUT_SESSION_ID}',
-            cancel_url=base_url + '/buy-human-review?canceled=true',
+            cancel_url=base_url + '/?canceled=true',
             metadata={
                 'type': 'human_review',
                 'user_id': user_id or 'anonymous',
@@ -1166,6 +1178,9 @@ def buy_human_review():
         )
         
         print(f"✅ Created checkout session for human review: {checkout_session.id}")
+        
+        # Store checkout session ID in session to track state
+        session['checkout_session_id'] = checkout_session.id
         
         # Redirect to Stripe Checkout
         return redirect(checkout_session.url, code=303)
@@ -1449,6 +1464,48 @@ This essay has potential but needs significant revision to be competitive for to
         "demo": True,
         "message": "This is a preview. Get the full detailed analysis with subscription.",
         "streaming": True
+    })
+
+@application.route("/rewrite", methods=["POST"])
+def rewrite():
+    # Check if user is authenticated
+    if 'user_id' not in session:
+        return jsonify({"error": "Authentication required"}), 401
+    
+    # Validate active subscription
+    user_id = session.get('user_id')
+    is_valid, message = validate_active_subscription(user_id)
+    
+    if not is_valid:
+        print(f"❌ Subscription validation failed for user {user_id}: {message}")
+        return jsonify({"error": f"Subscription required: {message}"}), 403
+    
+    essay_text = request.form["essay"]
+    print(f"=== REWRITE REQUEST START ===")
+    print(f"User {user_id} - Subscription validated: {message}")
+    print(f"Essay text length: {len(essay_text)}")
+    print(f"Essay preview: {essay_text[:100]}...")
+    
+    result = rewrite_essay(essay_text)
+    print(f"Got result generator: {result}")
+    
+    def generate_stream():
+        chunk_count = 0
+        try:
+            for chunk in result:
+                chunk_count += 1
+                print(f"Yielding chunk {chunk_count}: '{chunk[:50]}...' (length: {len(chunk)})")
+                yield chunk
+            print(f"=== REWRITE STREAMING COMPLETE - {chunk_count} chunks ===")
+        except Exception as e:
+            print(f"ERROR in generate_stream(): {e}")
+            yield f"Error: {str(e)}"
+    
+    print(f"=== STARTING REWRITE STREAMING RESPONSE ===")
+    return Response(generate_stream(), mimetype="text/plain", headers={
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+        'X-Accel-Buffering': 'no',
     })
 
 @application.route("/generate", methods=["POST"])

@@ -4,10 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>IvyLab - Expert College Essay Feedback</title>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
   <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-  <link rel="stylesheet" href="/static/css/style.css?v=3" />
+  <link rel="stylesheet" href="/static/css/style.css?v=9" />
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap');
     
@@ -25,14 +28,15 @@
       line-height: 1.6;
       font-size: 16px;
       font-weight: 400;
-      height: 100vh;
-      overflow: hidden;
+      min-height: 100vh;
+      overflow-x: hidden;
+      overflow-y: auto;
     }
     
     .header-section {
       text-align: center;
       margin-bottom: 20px;
-      padding: 20px 40px;
+      padding: 10px 40px;
     }
     
     .logo {
@@ -54,7 +58,9 @@
     
     .trust-badge {
       display: inline-flex;
+      flex-wrap: wrap;
       align-items: center;
+      justify-content: center;
       gap: 8px;
       background: linear-gradient(135deg, rgba(26, 54, 93, 0.1) 0%, rgba(26, 54, 93, 0.05) 100%);
         color: #1a4d1a;
@@ -65,7 +71,9 @@
       border: 1px solid rgba(212, 175, 55, 0.3);
       position: relative;
       overflow: hidden;
+      max-width: 100%;
     }
+    
     
     .trust-badge::before {
       content: '';
@@ -85,12 +93,11 @@
     .app-container {
       max-width: 1200px;
       margin: 0 auto;
-      padding: 0 40px 60px 40px;
+      padding: 0 40px 120px 40px;
       display: grid;
       grid-template-columns: 1fr 32px 1fr;
       gap: 0;
       align-items: stretch;
-      height: calc(100vh - 160px);
     }
     
     .left-panel {
@@ -100,7 +107,8 @@
       box-shadow: 0 8px 32px rgba(26, 54, 93, 0.12), 0 2px 8px rgba(26, 54, 93, 0.08);
       display: flex;
       flex-direction: column;
-      height: 100%;
+      height: calc(100vh - 380px);
+      max-height: calc(100vh - 380px);
       overflow: hidden;
       position: relative;
     }
@@ -123,7 +131,8 @@
       box-shadow: 0 8px 32px rgba(26, 54, 93, 0.12), 0 2px 8px rgba(26, 54, 93, 0.08);
       display: flex;
       flex-direction: column;
-      height: 100%;
+      height: calc(100vh - 380px);
+      max-height: calc(100vh - 380px);
       overflow: hidden;
       position: relative;
     }
@@ -150,11 +159,71 @@
       font-family: 'Playfair Display', serif;
       font-size: 18px;
       font-weight: 600;
-        color: #1a4d1a;
+      color: #1a4d1a;
       margin-bottom: 4px;
       display: flex;
       align-items: center;
       gap: 8px;
+    }
+    
+    /* Mode Toggle Container - Above white containers */
+    .mode-toggle-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+      margin: 0 auto 32px auto;
+      max-width: 1200px;
+      padding: 0 40px;
+      position: relative;
+      z-index: 10;
+      width: 100%;
+    }
+    
+    /* Mode Toggle Buttons */
+    .mode-toggle-button {
+      padding: 14px 32px;
+      font-size: 16px;
+      font-weight: 600;
+      border: 2px solid #1a4d1a;
+      background: #ffffff;
+      color: #1a4d1a;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: 'Playfair Display', serif;
+      outline: none;
+      position: relative;
+    }
+    
+    .mode-toggle-button:first-child {
+      border-radius: 12px 0 0 12px;
+      border-right: none;
+    }
+    
+    .mode-toggle-button:last-child {
+      border-radius: 0 12px 12px 0;
+      border-left: none;
+    }
+    
+    .mode-toggle-button:hover {
+      background: #f0f8f0;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(26, 77, 26, 0.2);
+    }
+    
+    .mode-toggle-button.active {
+      background: #1a4d1a;
+      color: #ffffff;
+      box-shadow: 0 4px 16px rgba(26, 77, 26, 0.4);
+      z-index: 1;
+    }
+    
+    .mode-toggle-button.active:hover {
+      background: #2d6b2d;
+      transform: translateY(-2px);
     }
     
     .panel-subtitle {
@@ -621,18 +690,55 @@
       }
       
       .header-section {
-        padding: 20px;
+        padding: 10px 20px;
+      }
+      
+      /* Mode toggle buttons responsive */
+      .mode-toggle-container {
+        padding: 0 20px !important;
+        margin-bottom: 16px !important;
+      }
+      
+      .mode-toggle-button {
+        padding: 12px 24px !important;
+        font-size: 14px !important;
+      }
+      
+      nav {
+        padding: 12px 20px !important;
+        flex-direction: column;
+        gap: 12px;
+        align-items: flex-start !important;
+      }
+      
+      nav > div:first-child {
+        flex-direction: column;
+        gap: 8px;
+        align-items: flex-start !important;
+      }
+      
+      nav > div:last-child {
+        width: 100%;
+        flex-direction: column;
+        gap: 8px;
+      }
+      
+      nav a {
+        width: 100%;
+        justify-content: center;
       }
       
       .app-container {
         grid-template-columns: 1fr;
         gap: 20px;
-        padding: 20px 20px 40px 20px;
+        padding: 20px 20px 80px 20px;
         height: auto;
+        min-height: auto;
       }
       
       .left-panel, .right-panel {
         height: auto;
+        max-height: none;
         min-height: 400px;
         border-radius: 12px;
       }
@@ -674,12 +780,70 @@
       .trust-badge {
         font-size: 0.8rem;
         padding: 6px 12px;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+      }
+      
+      .trust-badge span {
+        margin-left: 0 !important;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        width: 100%;
+        align-items: center;
+      }
+      
+      .trust-badge span a {
+        width: 100%;
+        max-width: 280px;
+        text-align: center;
+        margin-right: 0 !important;
+        margin-bottom: 4px;
+        padding: 10px 16px !important;
+        font-size: 0.85rem !important;
+      }
+      
+      .logo {
+        font-size: 1.8rem !important;
+      }
+      
+      .tagline {
+        font-size: 0.9rem !important;
       }
     }
     
     @media (max-width: 480px) {
       .app-container {
-        padding: 16px 16px 32px 16px;
+        padding: 16px 16px 60px 16px;
+      }
+      
+      .left-panel, .right-panel {
+        max-height: none;
+      }
+      
+      .header-section {
+        padding: 16px !important;
+      }
+      
+      .trust-badge {
+        padding: 12px 8px !important;
+      }
+      
+      .trust-badge span a {
+        max-width: 100% !important;
+        font-size: 0.8rem !important;
+        padding: 8px 12px !important;
+      }
+      
+      .logo {
+        font-size: 1.5rem !important;
+        margin-bottom: 8px;
+      }
+      
+      .tagline {
+        font-size: 0.85rem !important;
+        margin-bottom: 12px;
       }
       
       .panel-header {
@@ -698,36 +862,52 @@
 </head>
 
 <body>
+  <!-- Navbar -->
+  <nav style="background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); border-bottom: 2px solid #e2e8f0; padding: 12px 40px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+    <div style="display: flex; align-items: center; gap: 24px;">
+      <div class="logo" style="margin: 0; font-size: 1.8rem;">IvyLab</div>
+      <div style="font-size: 0.9rem; color: #6b7280;">Expert college essay feedback in seconds</div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 16px;">
+      <a href="/buy-human-review" style="color: #1a4d1a; text-decoration: none; padding: 8px 16px; border-radius: 8px; font-weight: 500; transition: all 0.2s; display: flex; align-items: center; gap: 6px;" onmouseover="this.style.background='#f0f8f0'" onmouseout="this.style.background='transparent'">
+        <i class="fas fa-graduation-cap"></i> Ivy Grad Review
+      </a>
+      <a href="/subscription" style="color: #4a5568; text-decoration: none; padding: 8px 16px; border-radius: 8px; font-weight: 500; transition: all 0.2s; display: flex; align-items: center; gap: 6px;" onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='transparent'">
+        <i class="fas fa-credit-card"></i> Manage Subscription
+      </a>
+      <a href="/logout" style="color: #4a5568; text-decoration: none; padding: 8px 16px; border-radius: 8px; font-weight: 500; transition: all 0.2s; display: flex; align-items: center; gap: 6px;" onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='transparent'">
+        <i class="fas fa-sign-out-alt"></i> Logout
+      </a>
+    </div>
+  </nav>
+
   <!-- Header Section -->
-  <div class="header-section">
-    <div class="logo">IvyLab</div>
-    <div class="tagline">Expert college essay feedback in seconds</div>
-    <div class="trust-badge">
+  <div class="header-section" style="padding: 20px 40px 10px 40px;">
+    <div class="trust-badge" style="margin: 0 auto;">
       <i class="fas fa-shield-alt"></i>
       Trusted 800+ admitted Ivy students
-      <span style="margin-left: 16px; font-size: 0.8rem; opacity: 0.7;">
-        <a href="/buy-human-review" style="color: white; text-decoration: none; margin-right: 16px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 8px 16px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.3); font-weight: 600; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);">
-          <i class="fas fa-graduation-cap"></i> Ivy Grad Review
-        </a>
-        <a href="/subscription" style="color: inherit; text-decoration: none; margin-right: 16px;">
-          <i class="fas fa-credit-card"></i> Manage Subscription
-        </a>
-        <a href="/logout" style="color: inherit; text-decoration: none;">
-          <i class="fas fa-sign-out-alt"></i> Logout
-        </a>
-      </span>
     </div>
+  </div>
+
+  <!-- Mode Toggle Buttons - Above containers -->
+  <div class="mode-toggle-container">
+    <button type="button" id="modeAnalysisBtn" class="mode-toggle-button active" onclick="setMode('analysis')">
+      <i class="fas fa-graduation-cap"></i> Essay Analysis
+    </button>
+    <button type="button" id="modeRewriteBtn" class="mode-toggle-button" onclick="setMode('rewrite')">
+      <i class="fas fa-magic"></i> Essay Rewrite
+    </button>
   </div>
 
   <div class="app-container">
     <!-- Left Panel - Input -->
     <div class="left-panel">
       <div class="panel-header">
-        <div class="panel-title">
+        <div class="panel-title" id="leftPanelTitle">
           <i class="fas fa-feather-alt"></i>
           Essay Input
         </div>
-        <div class="panel-subtitle">Sharpen your essay for top universities</div>
+        <div class="panel-subtitle" id="leftPanelSubtitle">Sharpen your essay for top universities</div>
       </div>
       <div class="panel-content">
         <div class="input-section">
@@ -748,10 +928,10 @@
               </div>
             </div>
           </div>
-          <button type="button" id="analyzeBtn" class="analyze-btn" onclick="analyzeEssay()">
-            <i class="fas fa-graduation-cap"></i> Analyze My Essay
+          <button type="button" id="analyzeBtn" class="analyze-btn" onclick="handleAction()">
+            <i class="fas fa-graduation-cap"></i> <span id="actionButtonText">Analyze My Essay</span>
           </button>
-            <div class="supportive-text">
+            <div class="supportive-text" id="supportiveText">
               <strong>Trained on thousands of successful Ivy essays</strong> 
               <span class="tooltip-trigger" title="Our AI is trained on thousands of successful essays from students admitted to Harvard, Yale, Princeton, and other top universities. Get feedback tailored to your specific goals and admissions standards.">
                 <i class="fas fa-info-circle"></i>
@@ -767,20 +947,20 @@
     <!-- Right Panel - Results -->
     <div class="right-panel">
       <div class="panel-header">
-        <div class="panel-title">
+        <div class="panel-title" id="rightPanelTitle">
           <i class="fas fa-mortar-board"></i>
-          Analysis Results
+          Results
         </div>
-        <div class="panel-subtitle">Admissions insights and actionable feedback</div>
+        <div class="panel-subtitle" id="rightPanelSubtitle">Admissions insights and actionable feedback</div>
       </div>
       <div class="panel-content">
         <div class="results-section">
           <div id="emptyState" class="empty-state">
-            <div class="empty-state-icon">
+            <div class="empty-state-icon" id="emptyStateIcon">
               <i class="fas fa-university"></i>
             </div>
-            <div class="empty-state-text">Get tailored feedback on structure, voice, and admissions potential</div>
-            <div class="empty-state-subtext">Your detailed analysis will appear here with actionable insights</div>
+            <div class="empty-state-text" id="emptyStateText">Get tailored feedback on structure, voice, and admissions potential</div>
+            <div class="empty-state-subtext" id="emptyStateSubtext">Your detailed analysis will appear here with actionable insights</div>
           </div>
           
           <div id="skeletonLoader" class="skeleton-loader">
@@ -808,10 +988,217 @@
 
   <script>
     // Simple app initialization
+    let currentMode = 'analysis'; // 'analysis' or 'rewrite'
+    
     document.addEventListener('DOMContentLoaded', function() {
         console.log('IvyLab loaded successfully');
       initializeWordCounter();
+      initializeModeToggle();
     });
+    
+    function initializeModeToggle() {
+      // Set initial state
+      currentMode = 'analysis';
+      updateModeButtons();
+      updateUIForMode();
+    }
+    
+    function setMode(mode) {
+      currentMode = mode;
+      updateModeButtons();
+      updateUIForMode();
+    }
+    
+    function updateModeButtons() {
+      const analysisBtn = document.getElementById('modeAnalysisBtn');
+      const rewriteBtn = document.getElementById('modeRewriteBtn');
+      
+      if (analysisBtn && rewriteBtn) {
+        if (currentMode === 'analysis') {
+          analysisBtn.classList.add('active');
+          rewriteBtn.classList.remove('active');
+        } else {
+          analysisBtn.classList.remove('active');
+          rewriteBtn.classList.add('active');
+        }
+      }
+    }
+    
+    function updateUIForMode() {
+      const isAnalysis = currentMode === 'analysis';
+      
+      // Update left panel - keep titles static
+      const leftTitle = document.getElementById('leftPanelTitle');
+      const leftSubtitle = document.getElementById('leftPanelSubtitle');
+      if (leftTitle) {
+        leftTitle.innerHTML = '<i class="fas fa-feather-alt"></i> Essay Input';
+      }
+      if (leftSubtitle) {
+        leftSubtitle.textContent = isAnalysis
+          ? 'Sharpen your essay for top universities'
+          : 'Input your essay to get a rewritten version';
+      }
+      
+      // Update right panel - keep titles static
+      const rightTitle = document.getElementById('rightPanelTitle');
+      const rightSubtitle = document.getElementById('rightPanelSubtitle');
+      if (rightTitle) {
+        rightTitle.innerHTML = isAnalysis
+          ? '<i class="fas fa-mortar-board"></i> Analysis Results'
+          : '<i class="fas fa-file-alt"></i> Rewritten Essay';
+      }
+      if (rightSubtitle) {
+        rightSubtitle.textContent = isAnalysis
+          ? 'Admissions insights and actionable feedback'
+          : 'Your rewritten essay will appear here';
+      }
+      
+      // Update button
+      const actionButton = document.getElementById('actionButtonText');
+      const actionIcon = document.getElementById('analyzeBtn').querySelector('i');
+      if (actionButton) {
+        actionButton.textContent = isAnalysis ? 'Analyze My Essay' : 'Rewrite My Essay';
+      }
+      if (actionIcon) {
+        actionIcon.className = isAnalysis ? 'fas fa-graduation-cap' : 'fas fa-magic';
+      }
+      
+      // Update supportive text
+      const supportiveText = document.getElementById('supportiveText');
+      if (supportiveText) {
+        if (isAnalysis) {
+          supportiveText.innerHTML = '<strong>Trained on thousands of successful Ivy essays</strong> <span class="tooltip-trigger" title="Our AI is trained on thousands of successful essays from students admitted to Harvard, Yale, Princeton, and other top universities. Get feedback tailored to your specific goals and admissions standards."><i class="fas fa-info-circle"></i></span>';
+          supportiveText.style.display = 'flex';
+        } else {
+          // Hide the supportive text box in rewrite mode
+          supportiveText.style.display = 'none';
+        }
+      }
+      
+      // Update empty state
+      const emptyStateIcon = document.getElementById('emptyStateIcon');
+      const emptyStateText = document.getElementById('emptyStateText');
+      const emptyStateSubtext = document.getElementById('emptyStateSubtext');
+      if (emptyStateIcon) {
+        emptyStateIcon.innerHTML = isAnalysis
+          ? '<i class="fas fa-university"></i>'
+          : '<i class="fas fa-file-alt"></i>';
+      }
+      if (emptyStateText) {
+        emptyStateText.textContent = isAnalysis
+          ? 'Get tailored feedback on structure, voice, and admissions potential'
+          : 'Your rewritten essay will appear here';
+      }
+      if (emptyStateSubtext) {
+        emptyStateSubtext.textContent = isAnalysis
+          ? 'Your detailed analysis will appear here with actionable insights'
+          : 'Paste your essay and click rewrite to get started';
+      }
+      
+      // Clear results when switching modes
+      showEmptyState();
+    }
+    
+    function handleAction() {
+      if (currentMode === 'analysis') {
+        analyzeEssay();
+      } else {
+        rewriteEssay();
+      }
+    }
+    
+    async function rewriteEssay() {
+      if (isAnalyzing) return;
+      
+      const essayText = document.getElementById('essayText').value.trim();
+      if (!essayText) {
+        showNotification('Please enter an essay to rewrite.', 'warning');
+        return;
+      }
+
+      isAnalyzing = true;
+      setButtonLoading(true);
+      showLoadingState();
+
+      try {
+        const response = await fetch('/rewrite', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: `essay=${encodeURIComponent(essayText)}`
+        });
+
+        if (!response.ok) {
+          // Handle subscription and authentication errors specifically
+          if (response.status === 401) {
+            showNotification('Please log in to continue.', 'error');
+            setTimeout(() => {
+              window.location.href = '/auth';
+            }, 2000);
+            return;
+          }
+          
+          if (response.status === 403) {
+            // Try to get the error message from the response
+            let errorMessage = 'Your subscription is required to rewrite essays.';
+            try {
+              const errorData = await response.json();
+              if (errorData.error) {
+                errorMessage = errorData.error;
+              }
+            } catch (e) {
+              // Use default message if we can't parse the response
+            }
+            
+            showNotification(errorMessage, 'error');
+            setTimeout(() => {
+              window.location.href = '/payment';
+            }, 3000);
+            return;
+          }
+          
+          throw new Error('Rewrite failed');
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder('utf-8');
+        let rewrittenText = '';
+
+        // Show results container and hide loading
+        hideLoadingState();
+        showResultsContainer();
+
+        const resultsDiv = document.getElementById('analysisContent');
+        if (resultsDiv) {
+          // Create container for the rewritten essay
+          const container = document.createElement('div');
+          container.style.cssText = "font-family: 'Inter', sans-serif; font-size: 14px; line-height: 1.8; color: #374151; padding: 20px; background: #f9fafb; border-radius: 8px; border: 1px solid #e5e7eb; white-space: pre-wrap;";
+          resultsDiv.innerHTML = '';
+          resultsDiv.appendChild(container);
+
+          while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
+            
+            const text = decoder.decode(value);
+            rewrittenText += text;
+            container.textContent = rewrittenText;
+            container.scrollTop = container.scrollHeight;
+          }
+        }
+
+        showNotification('Essay rewritten successfully!', 'success');
+      } catch (error) {
+        console.error('Rewrite error:', error);
+        showNotification('Rewrite failed. Please try again.', 'error');
+        hideLoadingState();
+        showEmptyState();
+      } finally {
+        isAnalyzing = false;
+        setButtonLoading(false);
+      }
+    }
 
     function initializeWordCounter() {
       const textarea = document.getElementById('essayText');
