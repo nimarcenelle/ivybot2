@@ -885,7 +885,7 @@
   <div class="header-section" style="padding: 20px 40px 10px 40px;">
     <div class="trust-badge" style="margin: 0 auto;">
       <i class="fas fa-shield-alt"></i>
-      Trusted 800+ admitted Ivy students
+      Trusted by 800+ admitted Ivy students
     </div>
   </div>
 
@@ -1171,11 +1171,10 @@
 
         const resultsDiv = document.getElementById('analysisContent');
         if (resultsDiv) {
-          // Create container for the rewritten essay
-          const container = document.createElement('div');
-          container.style.cssText = "font-family: 'Inter', sans-serif; font-size: 14px; line-height: 1.8; color: #374151; padding: 20px; background: #f9fafb; border-radius: 8px; border: 1px solid #e5e7eb; white-space: pre-wrap;";
-          resultsDiv.innerHTML = '';
-          resultsDiv.appendChild(container);
+          // Create premium styled container for the rewritten essay
+          resultsDiv.innerHTML = '<div style="max-width: 800px; margin: 0 auto; padding: 40px 20px; background: #f9fdfb;"><div style="background: #ffffff; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); padding: 32px; border-left: 4px solid #0b6240;"><div style="color: #444; line-height: 1.8; font-size: 15px; white-space: pre-wrap; font-family: \'Crimson Text\', Georgia, serif;" id="rewrittenEssayContent"></div></div></div>';
+          
+          const contentDiv = document.getElementById('rewrittenEssayContent');
 
           while (true) {
             const { value, done } = await reader.read();
@@ -1183,8 +1182,10 @@
             
             const text = decoder.decode(value);
             rewrittenText += text;
-            container.textContent = rewrittenText;
-            container.scrollTop = container.scrollHeight;
+            if (contentDiv) {
+              contentDiv.textContent = rewrittenText;
+              resultsDiv.scrollTop = resultsDiv.scrollHeight;
+            }
           }
         }
 
@@ -1318,9 +1319,9 @@
         function displayStreamingAnalysis(text) {
           const resultsDiv = document.getElementById('analysisContent');
           if (resultsDiv) {
-            // Simple markdown rendering - just bold the titles
-            const renderedText = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-            resultsDiv.innerHTML = `<div style="font-family: 'Inter', sans-serif; font-size: 14px; line-height: 1.6; color: #374151; padding: 20px; background: #f9fafb; border-radius: 8px; border: 1px solid #e5e7eb; white-space: pre-wrap;">${renderedText}</div>`;
+            // Apply premium formatting in real-time as text streams (hide Ivy card)
+            const formattedHTML = formatTextWithShading(text, false);
+            resultsDiv.innerHTML = formattedHTML;
             resultsDiv.scrollTop = resultsDiv.scrollHeight;
           }
         }
@@ -1328,12 +1329,161 @@
         function displayFinalAnalysis(text) {
           const resultsDiv = document.getElementById('analysisContent');
           if (resultsDiv) {
-            // Simple markdown rendering - just bold the titles
-            const renderedText = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-            resultsDiv.innerHTML = `<div style="font-family: 'Inter', sans-serif; font-size: 14px; line-height: 1.6; color: #374151; padding: 20px; background: #f9fafb; border-radius: 8px; border: 1px solid #e5e7eb; white-space: pre-wrap;">${renderedText}</div>`;
+            // Show final analysis with Ivy readiness card
+            const formattedHTML = formatTextWithShading(text, true);
+            resultsDiv.innerHTML = formattedHTML;
             resultsDiv.scrollTop = resultsDiv.scrollHeight;
           }
         }
+
+        function formatTextWithShading(text, showIvyCard = false) {
+          const lines = text.split('\n');
+          let html = '<div style="max-width: 800px; margin: 0 auto; padding: 40px 20px; background: #f9fdfb;">';
+          
+          let currentSectionStart = -1;
+          let currentSectionScore = null;
+          let currentSectionTitle = '';
+          let currentSectionLines = [];
+          let overallScore = null;
+          const categories = [];
+          
+          // First pass: find overall score - be more specific to avoid false matches
+          const overallMatch = text.match(/\*\*Overall Score[:\s]*(\d+)(?:\s*points?|\/100)?\s*\*\*/i) || 
+                               text.match(/Overall Score[:\s]*(\d+)(?:\s*points?|\/100)?/i);
+          if (overallMatch) {
+            const extractedScore = parseInt(overallMatch[1]);
+            // Only use if it's a reasonable score (between 0 and 100)
+            if (extractedScore >= 0 && extractedScore <= 100) {
+              overallScore = extractedScore;
+            }
+          }
+          
+          // If no overall score found, calculate from categories after parsing
+          
+          // Process each line to extract categories
+          for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            const trimmed = line.trim();
+            
+            // Check if this is a category header with score
+            const categoryMatch = trimmed.match(/\*\*(.+?)\s*[\(:]?\s*(\d+)\s*\/?\s*100?\s*[\):]?\s*\*\*/i) ||
+                                  trimmed.match(/\*\*(.+?)\s*[\(:]?\s*(\d+)\s*points?\s*[\):]?\s*\*\*/i);
+            
+            if (categoryMatch) {
+              // Finish previous section if exists
+              if (currentSectionStart >= 0 && currentSectionScore !== null) {
+                categories.push({
+                  title: currentSectionTitle,
+                  score: currentSectionScore,
+                  content: currentSectionLines.join('\n')
+                });
+              }
+              
+              // Start new section (don't include the header line in content)
+              currentSectionStart = i;
+              currentSectionTitle = categoryMatch[1].trim();
+              currentSectionScore = parseInt(categoryMatch[2]);
+              currentSectionLines = []; // Start with empty content
+            } else if (currentSectionStart >= 0) {
+              // Check if we hit another category or overall score
+              if (trimmed.startsWith('**Overall') || trimmed.toLowerCase().includes('overall score')) {
+                // Finish current section
+                if (currentSectionScore !== null) {
+                  categories.push({
+                    title: currentSectionTitle,
+                    score: currentSectionScore,
+                    content: currentSectionLines.join('\n')
+                  });
+                }
+                currentSectionStart = -1;
+                currentSectionScore = null;
+                currentSectionLines = [];
+              } else if (trimmed.length > 0) {
+                // Add to current section (skip empty lines at start)
+                currentSectionLines.push(line);
+              }
+            }
+          }
+          
+          // Finish last section if exists
+          if (currentSectionStart >= 0 && currentSectionScore !== null) {
+            categories.push({
+              title: currentSectionTitle,
+              score: currentSectionScore,
+              content: currentSectionLines.join('\n')
+            });
+          }
+          
+          // Calculate overall score from categories if not found in text
+          if (overallScore === null && categories.length > 0) {
+            overallScore = Math.round(categories.reduce((sum, cat) => sum + cat.score, 0) / categories.length);
+          }
+          
+          // Render overall score card first (if available)
+          if (overallScore !== null && overallScore > 0) {
+            const scoreColor = overallScore >= 90 ? '#f1c87a' : '#2a7b5f';
+            html += `
+              <div style="background: #ffffff; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); padding: 20px; margin-bottom: 24px; border-left: 4px solid #0b6240;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                  <h2 style="font-size: 17px; font-weight: 600; color: #1d3a33; margin: 0;">Overall Score</h2>
+                  <span style="font-size: 16px; font-weight: 600; color: ${scoreColor};">${overallScore}/100</span>
+                </div>
+                <div style="height: 6px; background: #e6f2ec; border-radius: 3px; margin-bottom: 16px;">
+                  <div style="height: 100%; width: ${overallScore}%; border-radius: 3px; background: linear-gradient(90deg, #0b6240, #2aa66b);"></div>
+                </div>
+              </div>
+            `;
+          }
+          
+          // Render category cards
+          categories.forEach(category => {
+            const scoreColor = category.score >= 90 ? '#f1c87a' : '#2a7b5f';
+            // Clean up markdown and extract content
+            let contentText = category.content.replace(/\*\*(.*?)\*\*/g, '$1').trim();
+            // Split into paragraphs
+            const paragraphs = contentText.split('\n').filter(p => p.trim().length > 0);
+            const firstParagraph = paragraphs[0] || '';
+            const restParagraphs = paragraphs.slice(1);
+            
+            html += `
+              <div style="background: #ffffff; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); padding: 20px; margin-bottom: 24px; border-left: 4px solid #0b6240;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                  <h2 style="font-size: 17px; font-weight: 600; color: #1d3a33; margin: 0;">${category.title}</h2>
+                  <span style="font-size: 16px; font-weight: 600; color: ${scoreColor};">${category.score}/100</span>
+                </div>
+                <div style="height: 6px; background: #e6f2ec; border-radius: 3px; margin-bottom: 16px;">
+                  <div style="height: 100%; width: ${category.score}%; border-radius: 3px; background: linear-gradient(90deg, #0b6240, #2aa66b);"></div>
+                </div>
+                <div style="color: #444; line-height: 1.6; font-size: 15px;">
+                  ${firstParagraph ? `<p style="margin: 0 0 12px 0; font-style: italic; color: #555;">${firstParagraph}</p>` : ''}
+                  ${restParagraphs.map(p => `<p style="margin: 0 0 12px 0; color: #444;">${p}</p>`).join('')}
+                </div>
+              </div>
+            `;
+          });
+          
+          html += '</div>';
+          
+          // Add Ivy readiness card at the end (only if requested)
+          if (showIvyCard) {
+            if (overallScore !== null) {
+              html += '<div style="max-width: 800px; margin: 0 auto; padding: 0 20px 40px 20px;">';
+              html += createIvyReadinessCard(overallScore);
+              html += '</div>';
+            } else {
+              // Try to calculate from category scores
+              if (categories.length > 0) {
+                const avgScore = Math.round(categories.reduce((sum, cat) => sum + cat.score, 0) / categories.length);
+                html += '<div style="max-width: 800px; margin: 0 auto; padding: 0 20px 40px 20px;">';
+                html += createIvyReadinessCard(avgScore);
+                html += '</div>';
+              }
+            }
+          }
+          
+          return html;
+        }
+
 
         function parseAnalysisSections(text) {
           const sections = [];
@@ -1453,7 +1603,18 @@
               // Start new category - clean up markdown symbols
               const parts = line.split(':');
               currentCategory = parts[0].replace(/^\*\*|\*\*$/g, '').replace(/[\*#]/g, '').trim();
-              currentScore = parts[1] ? parts[1].replace(/[\*#]/g, '').trim() : '';
+              // Clean score: remove "points" and ensure format is XX/100
+              let scoreText = parts[1] ? parts[1].replace(/[\*#]/g, '').trim() : '';
+              // Remove "points" text and format as XX/100
+              scoreText = scoreText.replace(/\s*points?\s*/gi, '').trim();
+              // If it doesn't have /100, try to extract number and add /100
+              if (scoreText && !scoreText.includes('/')) {
+                const numMatch = scoreText.match(/(\d+)/);
+                if (numMatch) {
+                  scoreText = `${numMatch[1]}/100`;
+                }
+              }
+              currentScore = scoreText;
               currentFeedback = '';
             } else if (line && !line.startsWith('#') && !line.startsWith('**Overall')) {
               // This is feedback text - clean up markdown symbols
@@ -1468,7 +1629,9 @@
           }
 
           // Find and store the overall score once
-          const overallMatch = text.match(/\*\*Overall Score[:\s]*(\d+)\/100\*\*/i);
+          // Try multiple patterns: "Overall Score: XX/100" or "Overall Score: XX points" or "Overall Score XX/100"
+          const overallMatch = text.match(/\*\*Overall Score[:\s]*(\d+)(?:\s*points?|\/100)?\s*\*\*/i) || 
+                               text.match(/Overall Score[:\s]*(\d+)(?:\s*points?|\/100)?/i);
           if (overallMatch) {
             overallScore = parseInt(overallMatch[1]);
             formattedHTML = createOverallScoreCard(overallScore) + formattedHTML;
@@ -1502,7 +1665,21 @@
       const cleanScore = score.replace(/[\*#]/g, '').trim();
       const cleanFeedback = feedback.replace(/[\*#]/g, '').trim();
       
-      const scoreNum = parseInt(cleanScore.match(/\d+/)?.[0] || '0');
+      // Extract score number and format as XX/100 (remove "points" text)
+      let scoreNum = 0;
+      let formattedScore = '0/100';
+      
+      // Try to extract score from various formats: "XX points", "XX/100", "XX points / 100", etc.
+      const scoreMatch = cleanScore.match(/(\d+)/);
+      if (scoreMatch) {
+        scoreNum = parseInt(scoreMatch[1]);
+        formattedScore = `${scoreNum}/100`;
+      } else if (cleanScore.includes('/')) {
+        // Already has / format, just clean it up
+        formattedScore = cleanScore.replace(/\s*points?\s*/gi, '').trim();
+        scoreNum = parseInt(formattedScore.split('/')[0]) || 0;
+      }
+      
       const scoreClass = getScoreClass(scoreNum);
       
       // Get color based on score
@@ -1525,7 +1702,7 @@
         <div class="category-card" style="background: ${cardColor}; border: 2px solid ${borderColor}; border-radius: 12px; padding: 20px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
           <div class="category-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
             <div class="category-title" style="font-size: 18px; font-weight: 600; color: ${borderColor};">${cleanCategory}</div>
-            <div class="score-badge ${scoreClass}" style="background: ${progressColor}; color: white; padding: 6px 12px; border-radius: 8px; font-weight: 700; font-size: 14px;">${cleanScore}</div>
+            <div class="score-badge ${scoreClass}" style="background: ${progressColor}; color: white; padding: 6px 12px; border-radius: 8px; font-weight: 700; font-size: 14px;">${formattedScore}</div>
           </div>
           <div class="progress-bar" style="height: 8px; background: #e5e7eb; border-radius: 4px; margin-bottom: 16px; overflow: hidden;">
             <div class="progress-fill ${scoreClass}" style="width: ${scoreNum}%; background: ${progressColor}; height: 100%; border-radius: 4px; transition: width 0.3s ease;"></div>
@@ -1538,7 +1715,7 @@
     function createOverallScoreCard(score) {
       const scoreClass = getScoreClass(score);
       const rating = getScoreRating(score);
-      const isIvyReady = score >= 80;
+      const isIvyReady = score >= 85; // 85+ is Ivy Ready
       const statusColor = isIvyReady ? '#1a4d1a' : '#dc2626';
       const statusText = isIvyReady ? 'Ivy Ready' : 'Not Ivy Ready';
       const statusIcon = isIvyReady ? '🎓' : '📝';
@@ -1563,83 +1740,35 @@
     }
 
     function createIvyReadinessCard(score) {
-      let tier, tierClass, tierColor, tierDescription, tierIcon, readinessStatus, isIvyReady;
+      let tierColor, readinessStatus, isIvyReady;
       
-      if (score >= 90) {
-        tier = 'Ivy Elite';
-        tierClass = 'ivy-elite';
+      // 85+ is Ivy Ready
+      if (score >= 85) {
         tierColor = '#1a4d1a';
-        tierDescription = 'Exceptional quality - competitive for Harvard, Yale, Princeton';
-        tierIcon = '🏆';
         readinessStatus = 'Ivy Ready';
         isIvyReady = true;
-      } else if (score >= 85) {
-        tier = 'Ivy Strong';
-        tierClass = 'ivy-strong';
-        tierColor = '#2d6b2d';
-        tierDescription = 'Strong candidate - competitive for top Ivy League schools';
-        tierIcon = '🎓';
-        readinessStatus = 'Ivy Ready';
-        isIvyReady = true;
-      } else if (score >= 80) {
-        tier = 'Ivy Potential';
-        tierClass = 'ivy-potential';
-        tierColor = '#8B4513';
-        tierDescription = 'Good foundation - needs refinement for top Ivies';
-        tierIcon = '⚡';
-        readinessStatus = 'Ivy Ready';
-        isIvyReady = true;
-      } else if (score >= 70) {
-        tier = 'Below Ivy Standard';
-        tierClass = 'below-ivy';
-        tierColor = '#dc2626';
-        tierDescription = 'Significant improvements needed for Ivy League competitiveness';
-        tierIcon = '📈';
-        readinessStatus = 'Not Ivy Ready';
-        isIvyReady = false;
       } else {
-        tier = 'Not Competitive';
-        tierClass = 'not-competitive';
         tierColor = '#dc2626';
-        tierDescription = 'Major revision required - not competitive for top universities';
-        tierIcon = '🔄';
         readinessStatus = 'Not Ivy Ready';
         isIvyReady = false;
       }
       
       const statusIcon = isIvyReady ? '✅' : '❌';
-      const backgroundGradient = isIvyReady ? 
-        'linear-gradient(135deg, #f0f8f0 0%, #e8f5e8 50%, #d4edda 100%)' : 
-        'linear-gradient(135deg, #fef2f2 0%, #fee2e2 50%, #fecaca 100%)';
+      const bgColor = isIvyReady ? '#f0f8f0' : '#fef2f2';
       
       return `
-        <div class="ivy-readiness-card ${tierClass}" style="background: ${backgroundGradient}; border: 4px solid ${tierColor}; border-radius: 20px; padding: 32px; margin-top: 32px; text-align: center; position: relative; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
-          <div style="position: absolute; top: -30px; right: -30px; width: 120px; height: 120px; background: ${tierColor}15; border-radius: 50%; opacity: 0.4;"></div>
-          <div style="position: absolute; bottom: -20px; left: -20px; width: 80px; height: 80px; background: ${tierColor}10; border-radius: 50%; opacity: 0.3;"></div>
-          
-          <div style="font-size: 64px; margin-bottom: 20px; position: relative; z-index: 1; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));">${tierIcon}</div>
-          
-          <div style="font-family: 'Merriweather', serif; font-size: 28px; font-weight: 800; color: ${tierColor}; margin-bottom: 12px; position: relative; z-index: 1; text-shadow: 0 1px 2px rgba(0,0,0,0.1);">${tier}</div>
-          
-          <div style="font-size: 18px; color: #4a5568; line-height: 1.6; max-width: 500px; margin: 0 auto 24px auto; position: relative; z-index: 1; font-weight: 500;">${tierDescription}</div>
-          
-          <div style="padding: 20px 32px; background: ${isIvyReady ? '#1a4d1a' : '#dc2626'}; border-radius: 16px; font-size: 22px; color: white; font-weight: 800; position: relative; z-index: 1; border: 3px solid ${tierColor}; box-shadow: 0 4px 12px rgba(0,0,0,0.15); text-transform: uppercase; letter-spacing: 1px;">
-            <div style="display: flex; align-items: center; justify-content: center; gap: 12px;">
-              <span style="font-size: 28px;">${statusIcon}</span>
-              <span>${readinessStatus}</span>
-            </div>
-          </div>
-          
-          <div style="margin-top: 20px; font-size: 14px; color: #6b7280; position: relative; z-index: 1; font-style: italic;">
-            ${isIvyReady ? 'Your essay meets Ivy League standards!' : 'Keep working to reach Ivy League standards.'}
+        <div class="ivy-readiness-card" style="background: ${bgColor}; border: 2px solid ${tierColor}; border-radius: 8px; padding: 12px 16px; margin-top: 16px; text-align: center;">
+          <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+            <span style="font-size: 18px;">${statusIcon}</span>
+            <span style="font-size: 16px; font-weight: 700; color: ${tierColor};">${readinessStatus}</span>
           </div>
         </div>
       `;
     }
 
     function getScoreClass(score) {
-      if (score >= 80) return 'high';
-      if (score >= 60) return 'medium';
+      if (score >= 85) return 'high'; // 85+ is good
+      if (score >= 70) return 'medium';
       return 'low';
     }
 
@@ -1677,13 +1806,18 @@
     function setButtonLoading(isAnalyzing) {
       const analyzeBtn = document.getElementById('analyzeBtn');
       const essayText = document.getElementById('essayText');
+      const isAnalysis = currentMode === 'analysis';
       
       if (isAnalyzing) {
-        analyzeBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analyzing...';
+        const loadingText = isAnalysis ? 'Analyzing...' : 'Rewriting...';
+        const loadingIcon = isAnalysis ? 'fa-graduation-cap' : 'fa-magic';
+        analyzeBtn.innerHTML = `<i class="fas ${loadingIcon} fa-spin"></i> ${loadingText}`;
         analyzeBtn.disabled = true;
         essayText.classList.add('analyzing');
       } else {
-        analyzeBtn.innerHTML = '<i class="fas fa-graduation-cap"></i> Analyze My Essay';
+        const buttonText = isAnalysis ? 'Analyze My Essay' : 'Rewrite My Essay';
+        const buttonIcon = isAnalysis ? 'fa-graduation-cap' : 'fa-magic';
+        analyzeBtn.innerHTML = `<i class="fas ${buttonIcon}"></i> <span id="actionButtonText">${buttonText}</span>`;
         analyzeBtn.disabled = false;
         essayText.classList.remove('analyzing');
       }
