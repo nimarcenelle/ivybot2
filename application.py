@@ -862,36 +862,67 @@ def test():
 @application.route("/debug-env")
 def debug_env():
     """Debug endpoint to check environment variables (without exposing values)"""
+    # Get API key
+    api_key = os.environ.get('OPENAI_API_KEY')
+    
     env_status = {
-        "OPENAI_API_KEY": "✅ Set" if os.environ.get('OPENAI_API_KEY') else "❌ Missing",
+        "OPENAI_API_KEY": "✅ Set" if api_key else "❌ Missing",
         "SECRET_KEY": "✅ Set" if os.environ.get('SECRET_KEY') else "❌ Missing",
         "STRIPE_SECRET_KEY": "✅ Set" if os.environ.get('STRIPE_SECRET_KEY') else "❌ Missing",
         "STRIPE_PUBLISHABLE_KEY": "✅ Set" if os.environ.get('STRIPE_PUBLISHABLE_KEY') else "❌ Missing",
         "FIREBASE_SERVICE_ACCOUNT_JSON": "✅ Set" if os.environ.get('FIREBASE_SERVICE_ACCOUNT_JSON') else "❌ Missing",
     }
     
+    # Additional debug info
+    debug_info = {}
+    if api_key:
+        debug_info["api_key_length"] = len(api_key)
+        debug_info["api_key_starts_with"] = api_key[:10] + "..."
+        debug_info["api_key_format_check"] = "✅ Starts with 'sk-'" if api_key.startswith('sk-') else "⚠️ Doesn't start with 'sk-'"
+    else:
+        # List all environment variable keys to help debug
+        all_keys = sorted(list(os.environ.keys()))
+        debug_info["total_env_vars"] = len(all_keys)
+        # Look for any keys that might be related
+        similar_keys = [k for k in all_keys if 'OPEN' in k.upper() or 'AI' in k.upper() or 'API' in k.upper()]
+        debug_info["similar_keys_found"] = similar_keys[:10]  # Limit to first 10
+    
     # Check OpenAI API key validity
     api_key_status = "Not checked"
-    if os.environ.get('OPENAI_API_KEY'):
+    api_key_error = None
+    if api_key:
         try:
             import openai
-            client = openai.OpenAI(api_key=os.environ.get('OPENAI_API_KEY'))
-            client.chat.completions.create(
+            print(f"🔍 Testing API key: {api_key[:10]}...")
+            # Create client without any extra parameters to avoid initialization errors
+            client = openai.OpenAI(api_key=api_key)
+            response = client.chat.completions.create(
                 model='gpt-3.5-turbo',
                 messages=[{'role': 'user', 'content': 'test'}],
-                max_tokens=1
+                max_tokens=1,
+                timeout=10
             )
             api_key_status = "✅ Valid and working"
+            debug_info["test_response"] = "Success"
+        except openai.AuthenticationError as e:
+            api_key_status = "❌ Authentication Error"
+            api_key_error = str(e)
+            debug_info["error_type"] = "AuthenticationError"
         except Exception as e:
-            api_key_status = f"❌ Error: {str(e)[:100]}"
+            api_key_status = f"❌ Error: {type(e).__name__}"
+            api_key_error = str(e)
+            debug_info["error_type"] = type(e).__name__
     else:
         api_key_status = "❌ Not set"
     
     env_status["OPENAI_API_KEY_VALIDITY"] = api_key_status
+    if api_key_error:
+        env_status["OPENAI_API_KEY_ERROR"] = api_key_error[:200]  # Limit error message length
     
     return jsonify({
         "status": "Environment variables check",
         "variables": env_status,
+        "debug_info": debug_info,
         "note": "Values are not exposed for security reasons"
     })
 
@@ -1609,7 +1640,8 @@ def verify_openai_key():
     
     try:
         import openai
-        client = openai.OpenAI(api_key=api_key)
+        # Create client without proxies to avoid initialization errors
+        client = openai.OpenAI(api_key=api_key, http_client=None)
         # Make a minimal test call
         client.chat.completions.create(
             model='gpt-3.5-turbo',

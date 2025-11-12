@@ -11,11 +11,22 @@ load_dotenv('.env', override=False)
 
 # Check if API key is available (dynamic check)
 def is_api_key_available():
+    # Force reload environment variables
+    load_dotenv('.env', override=False)
+    
     api_key = os.environ.get('OPENAI_API_KEY')
     if api_key:
-        print(f"✅ OpenAI API key found: {api_key[:10]}...")
+        print(f"✅ OpenAI API key found: {api_key[:10]}... (length: {len(api_key)})")
     else:
         print("❌ OpenAI API key not found in environment variables")
+        # Debug: print all environment variable keys (not values)
+        all_keys = list(os.environ.keys())
+        print(f"🔍 Total env vars: {len(all_keys)}")
+        openai_keys = [k for k in all_keys if 'OPENAI' in k.upper() or 'OPEN' in k.upper()]
+        if openai_keys:
+            print(f"🔍 Found keys with 'OPENAI': {openai_keys}")
+        else:
+            print("🔍 No keys found containing 'OPENAI'")
     return bool(api_key)
 
 def demo_analyze_response(essay_text):
@@ -103,12 +114,23 @@ My grandmother's kitchen taught me that the best creations come from combining t
 
 def generate_response(messages, model_type, max_tokens):
     def stream():
+        api_key = os.environ.get('OPENAI_API_KEY')
+        if not api_key:
+            print("❌ OPENAI_API_KEY not found in generate_response")
+            yield "Error: OpenAI API key not configured. Please set OPENAI_API_KEY environment variable."
+            return
+            
         try:
             # Create client instance for this function
-            openai_client = openai.OpenAI(api_key=os.environ.get('OPENAI_API_KEY'))
+            print(f"🔍 Creating OpenAI client with key starting: {api_key[:7]}...")
+            # Explicitly create client with only api_key to avoid proxy/environment issues
+            # Don't pass any proxy-related parameters
+            openai_client = openai.OpenAI(api_key=api_key)
+            print(f"🔍 Making API call to model: {model_type}")
             response = openai_client.chat.completions.create(
                 model=model_type, messages=messages, max_tokens=max_tokens, stream=True
             )
+            print("✅ API call initiated, streaming response...")
 
             for chunk in response:
                 if hasattr(chunk, 'choices') and len(chunk.choices) > 0:
@@ -117,33 +139,52 @@ def generate_response(messages, model_type, max_tokens):
                     if content:
                         yield content
 
+        except openai.AuthenticationError as exp:
+            print(f"❌ Authentication error in generate_response: {exp}")
+            yield f"Error: Invalid OpenAI API key. Please check your OPENAI_API_KEY environment variable."
         except Exception as exp:
-            print("Error:", exp)
+            print(f"❌ Error in generate_response: {exp}")
             yield f"Error occurred: {str(exp)}"
 
     return stream()
 
 
 def analyze_essay(essay_text):
-    # If no API key, return demo response
-    if not is_api_key_available():
+    # Get API key at runtime
+    api_key = os.environ.get('OPENAI_API_KEY')
+    
+    # Debug logging
+    print(f"🔍 analyze_essay called - API key present: {bool(api_key)}")
+    if api_key:
+        print(f"🔍 API key starts with: {api_key[:7]}...")
+    else:
+        print("❌ OPENAI_API_KEY not found in os.environ")
+        print(f"🔍 All env vars with 'OPENAI': {[k for k in os.environ.keys() if 'OPENAI' in k.upper()]}")
         return demo_analyze_response(essay_text)
     
-    # Check if API key is valid by testing it first
+    # Check if API key is valid by testing it first (but don't fail on network errors)
     try:
-        test_client = openai.OpenAI(api_key=os.environ.get('OPENAI_API_KEY'))
-        test_client.chat.completions.create(
+        # Create client without any extra parameters to avoid initialization errors
+        test_client = openai.OpenAI(api_key=api_key)
+        test_response = test_client.chat.completions.create(
             model='gpt-3.5-turbo',
             messages=[{'role': 'user', 'content': 'test'}],
-            max_tokens=1
+            max_tokens=1,
+            timeout=5  # 5 second timeout
         )
+        print("✅ API key test successful")
+    except openai.AuthenticationError as e:
+        print(f"❌ Authentication error: {e}")
+        print("⚠️ Invalid API key detected, using demo response")
+        return demo_analyze_response(essay_text)
     except Exception as e:
-        if "invalid_api_key" in str(e) or "Incorrect API key" in str(e):
-            print("⚠️ Invalid API key detected, using demo response")
+        error_str = str(e).lower()
+        if "invalid" in error_str and "api" in error_str and "key" in error_str:
+            print(f"❌ Invalid API key: {e}")
             return demo_analyze_response(essay_text)
         else:
-            print(f"⚠️ API error: {e}, using demo response")
-            return demo_analyze_response(essay_text)
+            # Network or other temporary error - log but continue with real API
+            print(f"⚠️ API test error (non-auth): {e} - proceeding with real API call anyway")
     
     request_data = {
         "role": "user",
@@ -256,8 +297,15 @@ Format your response with each category as a section, followed by the overall sc
 
 def rewrite_essay(essay_text):
     """Rewrite an essay to make it better using OpenAI"""
-    # If no API key, return demo response
-    if not is_api_key_available():
+    # Get API key at runtime
+    api_key = os.environ.get('OPENAI_API_KEY')
+    
+    # Debug logging
+    print(f"🔍 rewrite_essay called - API key present: {bool(api_key)}")
+    if api_key:
+        print(f"🔍 API key starts with: {api_key[:7]}...")
+    else:
+        print("❌ OPENAI_API_KEY not found in os.environ")
         def demo_stream():
             demo_text = "This is a demo rewrite. Add your OpenAI API key for real AI-powered essay rewriting."
             for word in demo_text.split():
@@ -266,17 +314,31 @@ def rewrite_essay(essay_text):
                 time.sleep(0.05)
         return demo_stream()
     
-    # Check if API key is valid by testing it first
+    # Check if API key is valid by testing it first (but don't fail on network errors)
     try:
-        test_client = openai.OpenAI(api_key=os.environ.get('OPENAI_API_KEY'))
-        test_client.chat.completions.create(
+        # Create client without any extra parameters to avoid initialization errors
+        test_client = openai.OpenAI(api_key=api_key)
+        test_response = test_client.chat.completions.create(
             model='gpt-3.5-turbo',
             messages=[{'role': 'user', 'content': 'test'}],
-            max_tokens=1
+            max_tokens=1,
+            timeout=5  # 5 second timeout
         )
+        print("✅ API key test successful")
+    except openai.AuthenticationError as e:
+        print(f"❌ Authentication error: {e}")
+        print("⚠️ Invalid API key detected, using demo response")
+        def demo_stream():
+            demo_text = "This is a demo rewrite. Add your OpenAI API key for real AI-powered essay rewriting."
+            for word in demo_text.split():
+                yield word + " "
+                import time
+                time.sleep(0.05)
+        return demo_stream()
     except Exception as e:
-        if "invalid_api_key" in str(e) or "Incorrect API key" in str(e):
-            print("⚠️ Invalid API key detected, using demo response")
+        error_str = str(e).lower()
+        if "invalid" in error_str and "api" in error_str and "key" in error_str:
+            print(f"❌ Invalid API key: {e}")
             def demo_stream():
                 demo_text = "This is a demo rewrite. Add your OpenAI API key for real AI-powered essay rewriting."
                 for word in demo_text.split():
@@ -285,14 +347,8 @@ def rewrite_essay(essay_text):
                     time.sleep(0.05)
             return demo_stream()
         else:
-            print(f"⚠️ API error: {e}, using demo response")
-            def demo_stream():
-                demo_text = "This is a demo rewrite. Add your OpenAI API key for real AI-powered essay rewriting."
-                for word in demo_text.split():
-                    yield word + " "
-                    import time
-                    time.sleep(0.05)
-            return demo_stream()
+            # Network or other temporary error - log but continue with real API
+            print(f"⚠️ API test error (non-auth): {e} - proceeding with real API call anyway")
     
     request_data = {
         "role": "user",
