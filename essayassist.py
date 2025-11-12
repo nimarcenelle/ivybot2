@@ -5,11 +5,18 @@ import openai
 from openai import APIError
 
 # Load environment variables
-load_dotenv()
+# Try to load from .env file (for local development), but don't fail if it doesn't exist
+# Environment variables set in Render dashboard will take precedence
+load_dotenv('.env', override=False)
 
 # Check if API key is available (dynamic check)
 def is_api_key_available():
-    return bool(os.environ.get('OPENAI_API_KEY'))
+    api_key = os.environ.get('OPENAI_API_KEY')
+    if api_key:
+        print(f"✅ OpenAI API key found: {api_key[:10]}...")
+    else:
+        print("❌ OpenAI API key not found in environment variables")
+    return bool(api_key)
 
 def demo_analyze_response(essay_text):
     """Demo response for essay analysis when no API key is available"""

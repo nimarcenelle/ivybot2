@@ -30,7 +30,21 @@ from essayassist import analyze_essay, generate_essay, rewrite_essay
 
 ### End of Imports ###
 
-load_dotenv('.env')
+# Load environment variables
+# Try to load from .env file (for local development), but don't fail if it doesn't exist
+# Environment variables set in Render dashboard will take precedence
+load_dotenv('.env', override=False)
+
+# Debug: Log environment variable status (without exposing values)
+print("=" * 50)
+print("🔍 ENVIRONMENT VARIABLES CHECK")
+print("=" * 50)
+print(f"OPENAI_API_KEY: {'✅ Set' if os.environ.get('OPENAI_API_KEY') else '❌ Missing'}")
+print(f"SECRET_KEY: {'✅ Set' if os.environ.get('SECRET_KEY') else '❌ Missing'}")
+print(f"STRIPE_SECRET_KEY: {'✅ Set' if os.environ.get('STRIPE_SECRET_KEY') else '❌ Missing'}")
+print(f"STRIPE_PUBLISHABLE_KEY: {'✅ Set' if os.environ.get('STRIPE_PUBLISHABLE_KEY') else '❌ Missing'}")
+print(f"FIREBASE_SERVICE_ACCOUNT_JSON: {'✅ Set' if os.environ.get('FIREBASE_SERVICE_ACCOUNT_JSON') else '❌ Missing'}")
+print("=" * 50)
 
 application = Flask(__name__)
 application.secret_key = os.environ.get('SECRET_KEY', 'your-secret-key-here')
@@ -845,6 +859,42 @@ def test():
     """Simple test route"""
     return "Test route working!"
 
+@application.route("/debug-env")
+def debug_env():
+    """Debug endpoint to check environment variables (without exposing values)"""
+    env_status = {
+        "OPENAI_API_KEY": "✅ Set" if os.environ.get('OPENAI_API_KEY') else "❌ Missing",
+        "SECRET_KEY": "✅ Set" if os.environ.get('SECRET_KEY') else "❌ Missing",
+        "STRIPE_SECRET_KEY": "✅ Set" if os.environ.get('STRIPE_SECRET_KEY') else "❌ Missing",
+        "STRIPE_PUBLISHABLE_KEY": "✅ Set" if os.environ.get('STRIPE_PUBLISHABLE_KEY') else "❌ Missing",
+        "FIREBASE_SERVICE_ACCOUNT_JSON": "✅ Set" if os.environ.get('FIREBASE_SERVICE_ACCOUNT_JSON') else "❌ Missing",
+    }
+    
+    # Check OpenAI API key validity
+    api_key_status = "Not checked"
+    if os.environ.get('OPENAI_API_KEY'):
+        try:
+            import openai
+            client = openai.OpenAI(api_key=os.environ.get('OPENAI_API_KEY'))
+            client.chat.completions.create(
+                model='gpt-3.5-turbo',
+                messages=[{'role': 'user', 'content': 'test'}],
+                max_tokens=1
+            )
+            api_key_status = "✅ Valid and working"
+        except Exception as e:
+            api_key_status = f"❌ Error: {str(e)[:100]}"
+    else:
+        api_key_status = "❌ Not set"
+    
+    env_status["OPENAI_API_KEY_VALIDITY"] = api_key_status
+    
+    return jsonify({
+        "status": "Environment variables check",
+        "variables": env_status,
+        "note": "Values are not exposed for security reasons"
+    })
+
 @application.route("/test-payment")
 def test_payment():
     """Test payment page without authentication"""
@@ -1548,6 +1598,36 @@ def generate():
         'Cache-Control': 'no-cache',
         'Connection': 'keep-alive',
     })
+
+# Verify OpenAI API key on startup (only if key is set)
+def verify_openai_key():
+    """Verify that OpenAI API key is valid and working"""
+    api_key = os.environ.get('OPENAI_API_KEY')
+    if not api_key:
+        print("⚠️  OPENAI_API_KEY not set - app will use demo responses")
+        return False
+    
+    try:
+        import openai
+        client = openai.OpenAI(api_key=api_key)
+        # Make a minimal test call
+        client.chat.completions.create(
+            model='gpt-3.5-turbo',
+            messages=[{'role': 'user', 'content': 'test'}],
+            max_tokens=1
+        )
+        print("✅ OpenAI API key verified and working")
+        return True
+    except Exception as e:
+        error_msg = str(e)
+        if "invalid_api_key" in error_msg.lower() or "incorrect api key" in error_msg.lower():
+            print(f"❌ OpenAI API key is invalid: {error_msg}")
+        else:
+            print(f"⚠️  OpenAI API key test failed: {error_msg}")
+        return False
+
+# Run verification on startup
+verify_openai_key()
 
 if __name__ == "__main__":
     # Production configuration
